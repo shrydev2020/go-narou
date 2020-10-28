@@ -1,0 +1,10 @@
+database:
+  path: "./database.db"
+
+storage:
+  dist: "小説データ"
+  subdist: "raw"
+
+epub:
+  lang: "日本語"
+  ppd: "rtl" # right to left

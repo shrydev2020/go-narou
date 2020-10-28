@@ -1,0 +1,17 @@
+body{
+  writing-mode: vertical-rl;
+  -webkit-writing-mode: vertical-rl;
+  -epub-writing-mode: vertical-rl;
+  text-align: justify;
+  font-size:100%;
+  line-height: 0.5em; !important;
+}
+p {
+  line-height: 1em;
+}
+.text-combine {
+  -webkit-text-combine: horizontal; /* 実装済 */
+  -moz-text-combine-upright: all; /* 実装済(Firefox nightly 版) */
+  -ms-text-combine-horizontal:all; /* 実装済 */
+  text-combine-upright: all;
+}
