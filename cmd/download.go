@@ -67,7 +67,9 @@ func executeDownload(_ *cobra.Command, args []string) {
 		novel.NewRepository(dist, subDist),
 		epub.NewRepository(dist),
 		c)
-	controller.NewConvertController(cvt, lg).Execute(args)
+	if err := controller.NewConvertController(cvt, lg).Execute(args); err != nil {
+		lg.Error("err", "error", err.Error())
+	}
 	m, _ := metadata2.NewRepository(db).FindByTopURI(metadata.URI(args[0]))
 	fmt.Printf("convert completed. epub generated at %s/%s/%s/%s.epub", dist, m.SiteName, m.Title, m.Title)
 
