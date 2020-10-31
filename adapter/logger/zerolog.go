@@ -19,7 +19,7 @@ type levelLogger struct {
 	logger zerolog.Logger
 }
 
-func NewLogger() log.Logger {
+func NewLogger(ctx context.Context) log.Logger {
 	output := zerolog.ConsoleWriter{
 		Out:             os.Stdout,
 		NoColor:         false,
@@ -38,11 +38,9 @@ func NewLogger() log.Logger {
 				return aurora.Green(strings.ToUpper(fmt.Sprintf("| %-6s|", i))).String()
 			}
 		},
-		FormatCaller: nil,
 		FormatMessage: func(i interface{}) string {
 			return fmt.Sprintf("*** %s ****", i)
 		},
-		FormatFieldName: nil,
 		FormatFieldValue: func(i interface{}) string {
 			return strings.ToUpper(fmt.Sprintf("%s", i))
 		},
@@ -52,13 +50,11 @@ func NewLogger() log.Logger {
 		FormatErrFieldValue: nil,
 	}
 
-	return &levelLogger{
+	lg := &levelLogger{
 		logger: zerolog.New(output).With().Logger(),
 	}
-}
-
-func (l *levelLogger) SetContext(ctx context.Context) {
-	l.logger.WithContext(ctx)
+	lg.logger.WithContext(ctx)
+	return lg
 }
 
 func (l *levelLogger) Debug(msg string, keyvals ...interface{}) {

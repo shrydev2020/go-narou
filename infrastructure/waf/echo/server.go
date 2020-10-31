@@ -1,6 +1,7 @@
 package echo
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -38,7 +39,7 @@ func (server) Start() {
 	}
 
 	e := echo.New()
-	lg := logger.NewLogger()
+	lg := logger.NewLogger(context.Background())
 
 	e.GET("/novel", func(c echo.Context) error {
 		lg.Info("main start")
