@@ -150,7 +150,7 @@ func addCSSClass(body string) string {
 	return threePoint.ReplaceAllString(
 		exclamationAndQuestionPattern.ReplaceAllString(
 			digitPattern.ReplaceAllString(
-				body, "<span class=\"text-combine\">${key}</span>"),
-			"<span class=\"text-combine\">${key}</span>"),
-		"<span class=\"text-three-point-reader\">${key}</span>")
+				body, `<span class="text-combine">${key}</span>`),
+			`<span class="text-combine">${key}</span>`),
+		`<span class="text-three-point-reader">${key}</span>`)
 }
