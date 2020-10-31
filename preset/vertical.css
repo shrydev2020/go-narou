@@ -1,3 +1,25 @@
+.cover {
+    font-size: 3em;
+    line-height: 2em;
+    writing-mode: vertical-rl;
+    -epub-writing-mode: vertical-rl;
+}
+
+.index_head {
+    line-height: 1em;
+}
+
+.author {
+    font-size: 2em;
+    text-align: end;
+    font-style: italic;
+}
+
+.chapter {
+    list-style: disc;
+    line-height: 2.0em;
+}
+
 body {
     writing-mode: vertical-rl;
     -webkit-writing-mode: vertical-rl;
