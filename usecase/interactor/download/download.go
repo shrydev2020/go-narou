@@ -76,10 +76,25 @@ func (uc *interactor) Execute(uri metadataModel.URI) ([]string, port.Application
 	if err != nil {
 		return nil, port.NewPortError(err, port.RepositoryError)
 	}
-
+	err2 := uc.novelRp.Store(meta.SiteName,
+		meta.Title,
+		strconv.Itoa(0)+" "+"000　index.html",
+		index)
+	if err2 != nil {
+		return nil, port.NewPortError(err, port.RepositoryError)
+	}
 	uc.logger.Info("start download")
 	baseURI, _ := url.Parse(string(uri))
 	subURLs := topPage.FindSubURIs()
+	if len(subURLs) > 1 {
+		// uc.outPutPort.OutPUtBoundary(novelOutputData)
+		return uc.downloadSubs(baseURI, subURLs, meta)
+	}
+	topPage.FindBody()
+	return nil, nil
+}
+
+func (uc *interactor) downloadSubs(baseURI *url.URL, subURLs []metadataModel.URI, meta *metadataModel.Novel) ([]string, port.ApplicationError) {
 	for i, sub := range subURLs {
 		u, e := toAbsURL(baseURI, sub)
 		if e != nil {
@@ -98,7 +113,7 @@ func (uc *interactor) Execute(uri metadataModel.URI) ([]string, port.Application
 		}
 
 		err2 := uc.novelRp.Store(meta.SiteName,
-			title,
+			meta.Title,
 			strconv.Itoa(i+1)+" "+d.FindEpisodeTitle()+".html",
 			pageText)
 		if err2 != nil {
@@ -110,7 +125,6 @@ func (uc *interactor) Execute(uri metadataModel.URI) ([]string, port.Application
 		// todo from config
 		time.Sleep(getSec())
 	}
-	// uc.outPutPort.OutPUtBoundary(novelOutputData)
 	return nil, nil
 }
 

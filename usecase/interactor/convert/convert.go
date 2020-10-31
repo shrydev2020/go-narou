@@ -58,7 +58,7 @@ func (uc *interactor) Execute(uri metadataModel.URI) port.ApplicationError {
 		return port.NewPortError(err, port.RepositoryError)
 	}
 
-	data := convertText2epubData(uc.novelRp.FindByNobelSiteAndTitle(meta.SiteName, meta.Title))
+	data := convertText2epubData(uc.novelRp.FindByNobelSiteAndTitle(meta.SiteName, meta.Title), uri)
 
 	epubModel, err := uc.newEpubData(epub.NewEpub(uc.ctx, uc.cfg).New(meta.Author, meta.Title), data)
 
@@ -80,7 +80,6 @@ type epubSection struct {
 }
 
 func (uc *interactor) newEpubData(model epub.IEpub, data []epubSection) (epub.IEpub, error) {
-	chapterMap := map[string]struct{}{}
 	cssPath, err := model.AddCSS("preset/vertical.css", "")
 
 	if err != nil {
@@ -95,16 +94,6 @@ func (uc *interactor) newEpubData(model epub.IEpub, data []epubSection) (epub.IE
 	}
 
 	for _, d := range data {
-		if _, found := chapterMap[d.chapterTitle]; !found {
-			chapterMap[d.chapterTitle] = struct{}{}
-			// add chapter page
-			_, err2 := model.AddSection(d.chapterTitle, d.chapterTitle, "", cssPath)
-			if err2 != nil {
-				uc.logger.Error(err2.Error())
-				return nil, port.NewPortError(err, port.EpubError)
-			}
-			continue
-		}
 		_, err := model.AddSection(d.body, d.subTitle, "", cssPath)
 		if err != nil {
 			uc.logger.Error(err.Error())
@@ -115,42 +104,51 @@ func (uc *interactor) newEpubData(model epub.IEpub, data []epubSection) (epub.IE
 	return model, nil
 }
 
-func convertText2epubData(texts []string) []epubSection {
+func convertText2epubData(texts []string, uri metadataModel.URI) []epubSection {
 	currentChTitle := ""
 	var data []epubSection
 	for _, txt := range texts {
 		d, _ := query.New(txt)
-		newChTitle := d.FindChapterTitle()
-		// make ch title page
-		if currentChTitle == "" ||
-			currentChTitle != newChTitle {
-
-			currentChTitle = newChTitle
+		overView := d.FindOverView()
+		if len(overView) > 0 {
 			data = append(data, epubSection{
-				chapterTitle: currentChTitle,
-				subTitle:     "",
-				body:         "",
+				chapterTitle: "",
+				subTitle:     d.FindTitle(),
+				body:         "<hr>" + overView + "\nRefer:<br/> <a href=\"" + string(uri) + "\" >" + string(uri) + "</a>" + "<hr>",
 			})
+			continue
 		}
-
 		data = append(data, epubSection{
 			chapterTitle: currentChTitle,
 			subTitle:     d.FindEpisodeTitle(),
-			body:         addCSSClass(d.FindBody()),
+			body:         addCSSClass(getEpisodeTitle(d) + getIntroductionCSS(d) + d.FindBody()),
 		})
 	}
 	return data
 }
 
-var digitPattern = regexp.MustCompile(`(?P<key>\b(\d{1,2})\b)`)
+func getEpisodeTitle(d narouQuery.IQuery) string {
+	return `<div class="episode-title">` +
+		digitPatternTil3.ReplaceAllString(d.FindEpisodeTitle(),
+			`<span class="text-combine">${key}</span>`) +
+		`</div>`
+}
+
+func getIntroductionCSS(d narouQuery.IQuery) string {
+	intro := d.FindPreface()
+	if len(intro) == 0 {
+		return ""
+	}
+	return `<div class="introduction">` + intro + `</div>`
+}
+
+var digitPatternTil2 = regexp.MustCompile(`(?P<key>\b(\d{1,2})\b)`)
+var digitPatternTil3 = regexp.MustCompile(`(?P<key>\b(\d{1,3})\b)`)
 var exclamationAndQuestionPattern = regexp.MustCompile(`(?P<key>(!!|!\?|\?|!|！！|！？|？|！))`)
-var threePoint = regexp.MustCompile(`(?P<key>(…))`)
 
 func addCSSClass(body string) string {
-	return threePoint.ReplaceAllString(
-		exclamationAndQuestionPattern.ReplaceAllString(
-			digitPattern.ReplaceAllString(
-				body, `<span class="text-combine">${key}</span>`),
-			`<span class="text-combine">${key}</span>`),
-		`<span class="text-three-point-reader">${key}</span>`)
+	return exclamationAndQuestionPattern.ReplaceAllString(
+		digitPatternTil2.ReplaceAllString(
+			body, `<span class="text-combine">${key}</span>`),
+		`<span class="text-combine">${key}</span>`)
 }

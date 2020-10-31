@@ -39,7 +39,16 @@ func (n *narouQuery) FindAuthor() string {
 
 // FindOverView return novel's over view.
 func (n *narouQuery) FindOverView() string {
-	return n.d.Find("div#novel_ex").Text()
+	b := ""
+
+	n.d.Find("div#novel_ex").Each(func(i int, selection *goquery.Selection) {
+		tmp, _ := selection.Html()
+		if tmp == "<br/>" {
+			return
+		}
+		b += "<p>" + tmp + "</p>"
+	})
+	return b
 }
 
 // FindNumberOfEpisodes return how many episodes are there.
@@ -92,4 +101,9 @@ func (n *narouQuery) FindBody() string {
 		})
 
 	return b
+}
+
+// FindPreface return chapter introduction.
+func (n *narouQuery) FindPreface() string {
+	return n.d.Find(".novel_view#novel_p").Text()
 }

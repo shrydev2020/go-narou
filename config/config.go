@@ -42,7 +42,7 @@ func (c *config) GetEpubSetting() (string, string) {
 
 type IConfigure interface {
 	GetDBConfig() string
-	GetStorageConfig() (dist, subdist string)
+	GetStorageConfig() (dist, subDist string)
 	GetEpubSetting() (lang, ppd string)
 }
 
