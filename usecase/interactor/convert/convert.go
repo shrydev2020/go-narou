@@ -121,10 +121,27 @@ func convertText2epubData(texts []string, uri metadataModel.URI) []epubSection {
 		data = append(data, epubSection{
 			chapterTitle: currentChTitle,
 			subTitle:     d.FindEpisodeTitle(),
-			body:         addCSSClass(getEpisodeTitle(d) + getIntroductionCSS(d) + d.FindBody()),
+			body: addCSSClass(getEpisodeTitle(d) +
+				getPrefaceCSS(d) +
+				d.FindBody() +
+				getAfterWordCSS(d)),
 		})
 	}
 	return data
+}
+
+func getPrefaceCSS(d narouQuery.IQuery) string {
+	if len(d.FindPreface()) == 0 {
+		return ""
+	}
+	return `<div class="episode-preface ">` + d.FindPreface() + `</div>`
+}
+
+func getAfterWordCSS(d narouQuery.IQuery) string {
+	if len(d.FindPreface()) == 0 {
+		return ""
+	}
+	return `<div class="episode-afterword ">` + d.FindPreface() + `</div>`
 }
 
 func getEpisodeTitle(d narouQuery.IQuery) string {
@@ -132,14 +149,6 @@ func getEpisodeTitle(d narouQuery.IQuery) string {
 		digitPatternTil3.ReplaceAllString(d.FindEpisodeTitle(),
 			`<span class="text-combine">${key}</span>`) +
 		`</div>`
-}
-
-func getIntroductionCSS(d narouQuery.IQuery) string {
-	intro := d.FindPreface()
-	if len(intro) == 0 {
-		return ""
-	}
-	return `<div class="introduction">` + intro + `</div>`
 }
 
 var digitPatternTil2 = regexp.MustCompile(`(?P<key>\b(\d{1,2})\b)`)

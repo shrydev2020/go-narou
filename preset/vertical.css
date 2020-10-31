@@ -28,11 +28,20 @@ p {
     margin-right: 1em;
 }
 
-.introduction {
+.episode-preface {
     padding: 1em 1em 1em 1em;
     border-top: 3px solid #aaa;
     color: #555;
     margin-top: 20em;
     margin-left: 3em;
+    font-size: 80%;
+}
+
+.episode-afterword {
+    padding: 1em 1em 1em 1em;
+    border-top: 3px solid #aaa;
+    color: #555;
+    margin-top: 20em;
+    margin-right: 4em;
     font-size: 80%;
 }
