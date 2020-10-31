@@ -3,8 +3,6 @@ package config
 import (
 	"fmt"
 
-	"github.com/fsnotify/fsnotify"
-
 	"github.com/spf13/viper"
 )
 
@@ -51,23 +49,15 @@ func InitConfigure() IConfigure {
 	viper.SetConfigType("yml")
 	viper.AddConfigPath(".")
 	viper.WatchConfig()
-	viper.OnConfigChange(func(e fsnotify.Event) {
-		fmt.Println("config file has changed:", e.Name)
-	})
-
-	// 環境変数から設定値を上書きできるように設定
 	viper.AutomaticEnv()
 
-	// conf読み取り
 	if err := viper.ReadInConfig(); err != nil {
 		fmt.Println("config file read error")
 		fmt.Println(err)
 		panic(err)
 	}
 
-	// 外部からconfの中身を参照できるようにする
 	var c config
-	// UnmarshalしてCにマッピング
 	if err := viper.Unmarshal(&c); err != nil {
 		fmt.Println("config file Unmarshal error")
 		fmt.Println(err)

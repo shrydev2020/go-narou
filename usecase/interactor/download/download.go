@@ -128,7 +128,7 @@ func (uc *interactor) downloadSubs(baseURI *url.URL, subURLs []metadataModel.URI
 	return nil, nil
 }
 
-const oneSec = 1
+const oneSec = 2
 
 func getSec() time.Duration {
 	return time.Second * oneSec

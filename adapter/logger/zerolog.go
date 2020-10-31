@@ -57,55 +57,55 @@ func NewLogger(ctx context.Context) log.Logger {
 	return lg
 }
 
-func (l *levelLogger) Debug(msg string, keyvals ...interface{}) {
-	l.print(l.logger.Debug, msg, keyvals...)
+func (l *levelLogger) Debug(msg string, keyValues ...interface{}) {
+	l.print(l.logger.Debug, msg, keyValues...)
 }
 
-func (l *levelLogger) Info(msg string, keyvals ...interface{}) {
-	l.print(l.logger.Info, msg, keyvals...)
+func (l *levelLogger) Info(msg string, keyValues ...interface{}) {
+	l.print(l.logger.Info, msg, keyValues...)
 }
 
-func (l *levelLogger) Warn(msg string, keyvals ...interface{}) {
-	l.print(l.logger.Warn, msg, keyvals...)
+func (l *levelLogger) Warn(msg string, keyValues ...interface{}) {
+	l.print(l.logger.Warn, msg, keyValues...)
 }
 
-func (l *levelLogger) Error(msg string, keyvals ...interface{}) {
-	l.print(l.logger.Error, msg, keyvals...)
+func (l *levelLogger) Error(msg string, keyValues ...interface{}) {
+	l.print(l.logger.Error, msg, keyValues...)
 }
 
-func (l *levelLogger) Fatal(msg string, keyvals ...interface{}) {
-	l.print(l.logger.Fatal, msg, keyvals...)
+func (l *levelLogger) Fatal(msg string, keyValues ...interface{}) {
+	l.print(l.logger.Fatal, msg, keyValues...)
 }
 
-func (l *levelLogger) Panic(msg string, keyvals ...interface{}) {
-	l.print(l.logger.Panic, msg, keyvals...)
+func (l *levelLogger) Panic(msg string, keyValues ...interface{}) {
+	l.print(l.logger.Panic, msg, keyValues...)
 }
 
-func (l *levelLogger) Log(keyvals ...interface{}) {
-	if len(keyvals) == 1 {
-		l.print(l.logger.Log, fmt.Sprint(keyvals[0]))
+func (l *levelLogger) Log(keyValues ...interface{}) {
+	if len(keyValues) == 1 {
+		l.print(l.logger.Log, fmt.Sprint(keyValues[0]))
 	} else {
-		l.print(l.logger.Log, "", keyvals...)
+		l.print(l.logger.Log, "", keyValues...)
 	}
 }
 
-func (l *levelLogger) print(lvl func() *zerolog.Event, msg string, keyvals ...interface{}) {
+func (l *levelLogger) print(lvl func() *zerolog.Event, msg string, keyValues ...interface{}) {
 	// when log.Info("test"), keyValues is [[]]
-	if !(len(keyvals) == 1 && reflect.ValueOf(keyvals[0]).IsNil()) &&
-		len(keyvals)%2 != 0 {
+	if !(len(keyValues) == 1 && reflect.ValueOf(keyValues[0]).IsNil()) &&
+		len(keyValues)%2 != 0 {
 		panic("illegal format")
 	}
 
-	if len(keyvals) == 1 && reflect.ValueOf(keyvals[0]).IsNil() {
-		keyvals = nil
+	if len(keyValues) == 1 && reflect.ValueOf(keyValues[0]).IsNil() {
+		keyValues = nil
 	}
 
 	event := lvl()
 	event = event.Timestamp()
 
-	for i := 0; i < len(keyvals); i += 2 {
-		k := convertKey(keyvals[i])
-		v := keyvals[i+1]
+	for i := 0; i < len(keyValues); i += 2 {
+		k := convertKey(keyValues[i])
+		v := keyValues[i+1]
 		event = apply(event, k, v)
 	}
 
