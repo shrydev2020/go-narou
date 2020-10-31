@@ -105,10 +105,26 @@ func (n *narouQuery) FindBody() string {
 
 // FindPreface return episode preface.
 func (n *narouQuery) FindPreface() string {
-	return n.d.Find(".novel_view#novel_p").Text()
+	b := ""
+	n.d.Find(".novel_view#novel_p").Each(func(_ int, selection *goquery.Selection) {
+		tmp, _ := selection.Html()
+		if tmp == "<br/>" {
+			return
+		}
+		b += "<p>" + tmp + "</p>"
+	})
+	return b
 }
 
 // FindAfterword return episode afterword.
 func (n *narouQuery) FindAfterword() string {
-	return n.d.Find(".novel_view#novel_a").Text()
+	b := ""
+	n.d.Find(".novel_view#novel_a").Each(func(_ int, selection *goquery.Selection) {
+		tmp, _ := selection.Html()
+		if tmp == "<br/>" {
+			return
+		}
+		b += "<p>" + tmp + "</p>"
+	})
+	return b
 }
