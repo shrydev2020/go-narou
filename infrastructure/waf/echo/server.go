@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"narou/infrastructure/storage"
+
 	"github.com/labstack/echo"
 
 	"narou/adapter/logger"
@@ -49,14 +51,13 @@ func (server) Start() {
 			panic(b)
 		}
 
-		dist, subDist := cfg.GetStorageConfig()
 		ctx := c.Request().Context()
 		it := convert.NewConvertInteractor(
 			ctx,
 			lg,
 			metadata2.NewRepository(con),
-			novel.NewRepository(dist, subDist),
-			epub.NewRepository(dist),
+			novel.NewRepository(storage.NewManager()),
+			epub.NewRepository(storage.NewManager()),
 			cfg)
 
 		err := controller.NewConvertController(it, lg).

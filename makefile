@@ -5,4 +5,4 @@ build:
 
 .PHONY: help
 	help:
-		@echo "めいく"
+		@echo "make file"

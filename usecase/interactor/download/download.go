@@ -1,7 +1,7 @@
 package download
 
 import (
-	"fmt"
+	"context"
 	"net/url"
 	"strconv"
 	"time"
@@ -21,6 +21,7 @@ type Interactor interface {
 }
 
 type interactor struct {
+	ctx           context.Context
 	logger        log.Logger
 	novelMetaRepo metadataModel.IRepository
 	novelRp       novel.IRepository
@@ -30,12 +31,14 @@ type interactor struct {
 }
 
 func NewDownloadInteractor(
+	ctx context.Context,
 	lg log.Logger,
 	metaDataRepo metadataModel.IRepository,
 	novelRepo novel.IRepository,
 	outputPort download.OutputPorter,
 	crawl crawl.Crawler) Interactor {
 	return &interactor{
+		ctx:           ctx,
 		logger:        lg,
 		novelMetaRepo: metaDataRepo,
 		novelRp:       novelRepo,
@@ -46,11 +49,6 @@ func NewDownloadInteractor(
 }
 
 func (uc *interactor) Execute(uri metadataModel.URI) ([]string, port.ApplicationError) {
-	meta, err := uc.novelMetaRepo.FindByTopURI(uri)
-	if err != nil {
-		return nil, port.NewPortError(err, port.RepositoryError)
-	}
-
 	index, err := uc.crawl.Start(uri)
 	if err != nil {
 		return nil, port.NewPortError(err, port.CrawlerError)
@@ -65,25 +63,27 @@ func (uc *interactor) Execute(uri metadataModel.URI) ([]string, port.Application
 	story := topPage.FindOverView()
 	author := topPage.FindAuthor()
 	subTitles := topPage.FindNumberOfEpisodes()
-	subURLs := topPage.FindSubURIs()
 
+	meta, err := uc.novelMetaRepo.FindByTopURI(uri)
+	if err != nil {
+		return nil, port.NewPortError(err, port.RepositoryError)
+	}
 	if meta == nil {
 		meta = metadataModel.NewMetaNovel(author, title, story, uri, subTitles)
 	}
 
 	err = uc.novelMetaRepo.Store(meta)
-	// err = uc.novelMetaRepo.StoreSubs(subs)
 	if err != nil {
 		return nil, port.NewPortError(err, port.RepositoryError)
 	}
 
+	uc.logger.Info("start download")
 	baseURI, _ := url.Parse(string(uri))
-
-	fmt.Print("start download\n")
+	subURLs := topPage.FindSubURIs()
 	for i, sub := range subURLs {
 		u, e := toAbsURL(baseURI, sub)
 		if e != nil {
-			uc.logger.Error(e.Error())
+			uc.logger.Error("err occurred", "msg", e.Error())
 			return nil, port.NewPortError(e, port.InvalidParam)
 		}
 
@@ -106,7 +106,7 @@ func (uc *interactor) Execute(uri metadataModel.URI) ([]string, port.Application
 			return nil, port.NewPortError(er, port.CrawlerError)
 		}
 
-		fmt.Printf("%s	(%d/%d) done\n", d.FindEpisodeTitle(), i+1, len(subURLs))
+		uc.logger.Info(d.FindEpisodeTitle(), "total", len(subURLs), "current", i+1)
 		// todo from config
 		time.Sleep(getSec())
 	}
@@ -122,12 +122,9 @@ func getSec() time.Duration {
 
 func toAbsURL(baseURL *url.URL, weburl metadataModel.URI) (string, error) {
 	parsedURL, err := url.Parse(string(weburl))
-
 	if err != nil {
 		return "", err
 	}
 
-	absURL := baseURL.ResolveReference(parsedURL)
-
-	return absURL.String(), nil
+	return baseURL.ResolveReference(parsedURL).String(), nil
 }

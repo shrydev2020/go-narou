@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"narou/infrastructure/storage"
+
 	"narou/domain/novel"
 	"narou/sdk/slice"
 )
@@ -14,10 +16,10 @@ type repo struct {
 	dist, subDist string
 }
 
-func NewRepository(dist, subDist string) novel.IRepository {
+func NewRepository(manager storage.Manager) novel.IRepository {
 	return &repo{
-		dist:    dist,
-		subDist: subDist,
+		dist:    manager.GetDist(),
+		subDist: manager.GetSubDist(),
 	}
 }
 

@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"os"
 
+	"narou/infrastructure/storage"
+
 	"github.com/spf13/cobra"
 
 	"narou/adapter/logger"
 	"narou/adapter/repository/epub"
-	metadata2 "narou/adapter/repository/metadata"
+	metadataRepo "narou/adapter/repository/metadata"
 	"narou/adapter/repository/novel"
 	"narou/config"
 	"narou/domain/metadata"
@@ -25,7 +27,6 @@ func init() {
 	var downloadCmd = &cobra.Command{
 		Use:   "d",
 		Short: "start download and convert",
-		Long:  `start download and convert`,
 		Args:  executeArgs,
 		Run:   executeDownload,
 	}
@@ -39,7 +40,7 @@ func executeArgs(_ *cobra.Command, args []string) error {
 
 func executeDownload(_ *cobra.Command, args []string) {
 	lg := logger.NewLogger()
-	c := config.InitConfigure()
+	ctx := context.Background()
 	db, err := database.GetConn()
 
 	if err != nil {
@@ -47,30 +48,32 @@ func executeDownload(_ *cobra.Command, args []string) {
 	}
 
 	a := download.NewDownloadInteractor(
+		ctx,
 		lg,
-		metadata2.NewRepository(db),
-		novel.NewRepository(c.GetStorageConfig()),
+		metadataRepo.NewRepository(db),
+		novel.NewRepository(storage.NewManager()),
 		nil,
 		crawl.NewCrawler(lg))
 
 	ret, err := controller.NewDownloadController(a, lg).Execute(args)
 	if err != nil {
-		fmt.Printf("error occurred:%v\n", err)
+		lg.Error("error occurred", "err", err.Error())
 		os.Exit(1)
 	}
-	fmt.Printf("download completed. episodes:%d", len(ret))
-	dist, subDist := c.GetStorageConfig()
-	ctx := context.Background()
-	cvt := convert.NewConvertInteractor(ctx,
+	lg.Info("download completed. episodes", "total", len(ret))
+	cvt := convert.NewConvertInteractor(
+		ctx,
 		lg,
-		metadata2.NewRepository(db),
-		novel.NewRepository(dist, subDist),
-		epub.NewRepository(dist),
-		c)
+		metadataRepo.NewRepository(db),
+		novel.NewRepository(storage.NewManager()),
+		epub.NewRepository(storage.NewManager()),
+		config.InitConfigure())
+
 	if err := controller.NewConvertController(cvt, lg).Execute(args); err != nil {
 		lg.Error("err", "error", err.Error())
 	}
-	m, _ := metadata2.NewRepository(db).FindByTopURI(metadata.URI(args[0]))
-	fmt.Printf("convert completed. epub generated at %s/%s/%s/%s.epub", dist, m.SiteName, m.Title, m.Title)
-
+	m, _ := metadataRepo.NewRepository(db).FindByTopURI(metadata.URI(args[0]))
+	msg := fmt.Sprintf("convert completed. epub generated at %s/%s/%s/%s.epub", storage.NewManager().GetDist(),
+		m.SiteName, m.Title, m.Title)
+	lg.Info("finis!", "msg", msg)
 }

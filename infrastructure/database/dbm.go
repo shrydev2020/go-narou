@@ -89,8 +89,8 @@ func GetConn() (DBM, error) {
 
 // OpenDB is a drop-in replacement for Open().
 func OpenDB(path string) (err error) {
-	gormdb, err := internal.OpenDB(path)
-	single.w = gormdb
+	gormDB, err := internal.OpenDB(path)
+	single.w = gormDB
 
 	return err
 }

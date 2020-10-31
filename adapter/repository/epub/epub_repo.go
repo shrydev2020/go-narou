@@ -3,15 +3,16 @@ package epub
 import (
 	"narou/adapter/repository"
 	"narou/domain/epub"
+	"narou/infrastructure/storage"
 )
 
 type repo struct {
 	dist string
 }
 
-func NewRepository(dist string) epub.IRepository {
+func NewRepository(manager storage.Manager) epub.IRepository {
 	return &repo{
-		dist: dist,
+		dist: manager.GetDist(),
 	}
 }
 
