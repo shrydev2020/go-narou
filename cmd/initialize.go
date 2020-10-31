@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os"
 
@@ -30,7 +31,7 @@ initialize database
 func executeInitialize(c *cobra.Command, _ []string) {
 	if Question("Execute DB initialization y/n] ") {
 		fmt.Println("execute initialization")
-		lg := logger.NewLogger()
+		lg := logger.NewLogger(context.Background())
 		db, _ := database.GetConn()
 		i := initialize.NewInitializeInteractor(db)
 		if err := controller.NewInitializeController(i, lg, db).Execute(); err != nil {
