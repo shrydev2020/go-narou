@@ -21,7 +21,7 @@ func NewRepository(db database.DBM) metadata.IRepository {
 func (r *repo) FindByTopURI(uri metadata.URI) (*metadata.Novel, error) {
 	var ret metadata.Novel
 	err := r.db.Model(&metadata.Novel{}).
-		Where("top_url = ?", uri).
+		Where("top_url like ?", "%"+uri+"%").
 		First(&ret).Error()
 
 	if err != nil {
