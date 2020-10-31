@@ -22,7 +22,7 @@ func NewDownloadController(it downloadIc.Interactor, logger log.Logger) Download
 	}
 }
 
-func (d download) Execute(args []string) ([]string, error) {
+func (d *download) Execute(args []string) ([]string, error) {
 	d.logger.Info("Execute -- start")
 	defer d.logger.Info("Execute -- end")
 

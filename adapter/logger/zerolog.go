@@ -94,7 +94,7 @@ func (l *levelLogger) Log(keyvals ...interface{}) {
 }
 
 func (l *levelLogger) print(lvl func() *zerolog.Event, msg string, keyvals ...interface{}) {
-	// when log.Info("test"), keyvals is [[]]
+	// when log.Info("test"), keyValues is [[]]
 	if !(len(keyvals) == 1 && reflect.ValueOf(keyvals[0]).IsNil()) &&
 		len(keyvals)%2 != 0 {
 		panic("illegal format")

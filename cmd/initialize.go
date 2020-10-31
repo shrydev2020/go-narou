@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/spf13/cobra"
+
 	"narou/adapter/logger"
 	"narou/infrastructure/database"
-	"narou/usecase/interactor/initialize"
-
 	"narou/interface/controller"
-
-	"github.com/spf13/cobra"
+	"narou/usecase/interactor/initialize"
 )
 
 func init() {
@@ -34,7 +33,8 @@ func executeInitialize(c *cobra.Command, _ []string) {
 		lg := logger.NewLogger()
 		db, _ := database.GetConn()
 		i := initialize.NewInitializeInteractor(db)
-		if err := controller.NewInitializeController(i, lg, db); err != nil {
+		if err := controller.NewInitializeController(i, lg, db).Execute(); err != nil {
+			lg.Error("err", "err", err.Error())
 			return
 		}
 
