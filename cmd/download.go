@@ -1,11 +1,7 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
-	"os"
-
-	"narou/infrastructure/storage"
 
 	"github.com/spf13/cobra"
 
@@ -16,6 +12,7 @@ import (
 	"narou/config"
 	"narou/domain/metadata"
 	"narou/infrastructure/database"
+	"narou/infrastructure/storage"
 	"narou/interface/controller"
 	"narou/interface/gateway/crawl"
 	"narou/usecase/interactor/convert"
@@ -28,7 +25,7 @@ func init() {
 		Use:   "d",
 		Short: "start download and convert",
 		Args:  executeArgs,
-		Run:   executeDownload,
+		RunE:  executeDownload,
 	}
 
 	rootCmd.AddCommand(downloadCmd)
@@ -38,13 +35,13 @@ func executeArgs(_ *cobra.Command, args []string) error {
 	return validate(args)
 }
 
-func executeDownload(_ *cobra.Command, args []string) {
-	lg := logger.NewLogger()
-	ctx := context.Background()
+func executeDownload(c *cobra.Command, args []string) error {
+	ctx := c.Context()
+	lg := logger.NewLogger(ctx)
 	db, err := database.GetConn()
 
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	a := download.NewDownloadInteractor(
@@ -58,7 +55,7 @@ func executeDownload(_ *cobra.Command, args []string) {
 	ret, err := controller.NewDownloadController(a, lg).Execute(args)
 	if err != nil {
 		lg.Error("error occurred", "err", err.Error())
-		os.Exit(1)
+		return err
 	}
 	lg.Info("download completed. episodes", "total", len(ret))
 	cvt := convert.NewConvertInteractor(
@@ -76,4 +73,5 @@ func executeDownload(_ *cobra.Command, args []string) {
 	msg := fmt.Sprintf("convert completed. epub generated at %s/%s/%s/%s.epub", storage.NewManager().GetDist(),
 		m.SiteName, m.Title, m.Title)
 	lg.Info("finis!", "msg", msg)
+	return nil
 }
