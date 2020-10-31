@@ -1,26 +1,38 @@
 body {
-  writing-mode: vertical-rl;
-  -webkit-writing-mode: vertical-rl;
-  -epub-writing-mode: vertical-rl;
-  text-align: justify;
-  font-size:100%;
-  line-height: 1em; !important;
-  font-family: "@ＭＳ 明朝", "@MS Mincho", "ヒラギノ明朝 ProN W3", "HiraMinProN-W3", serif, sans-serif;
+    writing-mode: vertical-rl;
+    -webkit-writing-mode: vertical-rl;
+    -epub-writing-mode: vertical-rl;
+    text-align: justify;
+    font-size: 100%;
+    line-height: 1em;
+    font-family: "@ＭＳ 明朝", "@MS Mincho", "ヒラギノ明朝 ProN W3", "HiraMinProN-W3", serif, sans-serif;
 }
 
 p {
-  margin-block-end: 0.0em !important;
-  margin-block-start: 0.0em !important;
-  line-height: 1.5em;
+    margin-block-end: 0.0em;
+    margin-block-start: 0.0em;
+    line-height: 1.5em;
 }
 
 .text-combine {
-  -webkit-text-combine: horizontal; /* 実装済 */
-  -moz-text-combine-upright: all; /* 実装済(Firefox nightly 版) */
-  -ms-text-combine-horizontal:all; /* 実装済 */
-  text-combine-upright: all;
+    -webkit-text-combine: horizontal; /* 実装済 */
+    -moz-text-combine-upright: all; /* 実装済(Firefox nightly 版) */
+    -ms-text-combine-horizontal: all; /* 実装済 */
+    text-combine-upright: all;
 }
 
-.text-three-point-reader {
-  text-align: center;
+.episode-title {
+    padding-top: 5em;
+    font-size: 150%;
+    width: 2em;
+    margin-right: 1em;
+}
+
+.introduction {
+    padding: 1em 1em 1em 1em;
+    border-top: 3px solid #aaa;
+    color: #555;
+    margin-top: 20em;
+    margin-left: 3em;
+    font-size: 80%;
 }

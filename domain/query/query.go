@@ -10,5 +10,6 @@ type IQuery interface {
 	FindSubURIs() []metadata.URI
 	FindChapterTitle() string
 	FindEpisodeTitle() string
+	FindPreface() string
 	FindBody() string
 }
