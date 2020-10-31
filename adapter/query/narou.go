@@ -103,7 +103,12 @@ func (n *narouQuery) FindBody() string {
 	return b
 }
 
-// FindPreface return chapter introduction.
+// FindPreface return episode preface.
 func (n *narouQuery) FindPreface() string {
 	return n.d.Find(".novel_view#novel_p").Text()
+}
+
+// FindAfterword return episode afterword.
+func (n *narouQuery) FindAfterword() string {
+	return n.d.Find(".novel_view#novel_a").Text()
 }

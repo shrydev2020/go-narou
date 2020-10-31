@@ -11,5 +11,6 @@ type IQuery interface {
 	FindChapterTitle() string
 	FindEpisodeTitle() string
 	FindPreface() string
+	FindAfterword() string
 	FindBody() string
 }
