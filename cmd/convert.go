@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"errors"
+
 	"narou/infrastructure/database"
 
 	"narou/adapter/logger"
@@ -20,6 +22,9 @@ var convertCmd = &cobra.Command{
 	Use:   "convert",
 	Short: "convert html to epub",
 	RunE: func(c *cobra.Command, args []string) error {
+		if len(args) == 0 {
+			return errors.New("need id")
+		}
 		ctx := c.Context()
 		lg := logger.NewLogger(ctx)
 		db, err := database.GetConn()

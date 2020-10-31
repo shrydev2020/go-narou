@@ -49,12 +49,23 @@ func (r *repo) Initialize() error {
 }
 
 // Store store metadata.
-func (r *repo) Store(n *metadata.Novel) error {
-	return r.db.Save(n).Error()
+func (r *repo) Store(n *metadata.Novel) (*metadata.Novel, error) {
+	d := r.db.Save(n)
+	return n, d.Error()
 }
 
 // StoreSubs store sub meta data.
-func (r *repo) StoreSubs(subs []metadata.Sub) ([]metadata.Sub, error) {
-	r.db.Create(&subs)
-	return subs, r.db.Create(&subs).Error()
+func (r *repo) StoreSub(sub *metadata.Sub) (*metadata.Sub, error) {
+	var tmp []metadata.Sub
+	d := r.db.
+		Where("novel_id = ?", sub.NovelID).
+		Where("index_id = ?", sub.IndexID).Find(&tmp)
+	if len(tmp) == 0 {
+		d = r.db.Create(sub)
+	} else {
+		d = r.db.
+			Where("novel_id = ?", sub.NovelID).
+			Where("index_id = ?", sub.IndexID).Save(sub)
+	}
+	return sub, d.Error()
 }

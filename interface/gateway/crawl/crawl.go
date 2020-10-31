@@ -14,34 +14,36 @@ type Crawler interface {
 }
 
 type crawl struct {
-	l log.Logger
+	lg log.Logger
 }
 
-func NewCrawler(l log.Logger) Crawler {
+func NewCrawler(lg log.Logger) Crawler {
 	return &crawl{
-		l: l,
+		lg: lg,
 	}
 }
 
-// Start クロール.
-// @return html and err
+// Start crawl return html and err
 func (c crawl) Start(uri metadata.URI) (string, error) {
 	res, err := http.Get(string(uri))
 	if err != nil {
 		return "", err
 	}
-	defer handleDefer(c.l, res.Body.Close)
+	defer handleDefer(c.lg, res.Body.Close)
 
 	if res.StatusCode != 200 {
-		c.l.Error("status code error", "code", res.StatusCode, "status", res.Status)
+		c.lg.Error("status code error", "code", res.StatusCode, "status", res.Status)
 	}
-	body, err := ioutil.ReadAll(res.Body)
+	body, err2 := ioutil.ReadAll(res.Body)
+	if err2 != nil {
+		c.lg.Error("err occurred", "err", err)
+	}
 	buf := bytes.NewBuffer(body)
 	return buf.String(), nil
 }
 
-func handleDefer(l log.Logger, c func() error) {
+func handleDefer(lg log.Logger, c func() error) {
 	if err := c(); err != nil {
-		l.Error(err.Error())
+		lg.Error(err.Error())
 	}
 }

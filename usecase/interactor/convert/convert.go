@@ -131,17 +131,19 @@ func convertText2epubData(texts []string, uri metadataModel.URI) []epubSection {
 }
 
 func getPrefaceCSS(d narouQuery.IQuery) string {
-	if len(d.FindPreface()) == 0 {
+	p := d.FindPreface()
+	if len(p) == 0 {
 		return ""
 	}
-	return `<div class="episode-preface ">` + d.FindPreface() + `</div>`
+	return `<div class="episode-preface ">` + p + `</div>`
 }
 
 func getAfterWordCSS(d narouQuery.IQuery) string {
-	if len(d.FindPreface()) == 0 {
+	aw := d.FindAfterword()
+	if len(aw) == 0 {
 		return ""
 	}
-	return `<div class="episode-afterword ">` + d.FindPreface() + `</div>`
+	return `<div class="episode-afterword ">` + aw + `</div>`
 }
 
 func getEpisodeTitle(d narouQuery.IQuery) string {

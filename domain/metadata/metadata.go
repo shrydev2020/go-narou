@@ -34,7 +34,7 @@ func (n *Novel) TableName() string {
 
 type Sub struct {
 	NovelID      int
-	Index        int
+	IndexID      int
 	Href         URI
 	Chapter      string
 	Subtitle     string
@@ -56,7 +56,7 @@ const (
 	SS
 )
 
-func GetSiteName(uri URI) string {
+func getSiteName(uri URI) string {
 	ur := string(uri)
 	if strings.Contains(ur, "https://ncode.syosetu.com/") {
 		return "小説家になろう"
@@ -66,10 +66,10 @@ func GetSiteName(uri URI) string {
 	return "Nof Supported"
 }
 
-func GetID(uri URI) string {
-	eplaced1 := strings.Replace(string(uri), "https://ncode.syosetu.com/", "", -1)
-	eplaced1 = strings.Replace(string(uri), "/", "", -1)
-	return eplaced1
+func convert2FileTitle(uri URI) string {
+	delDomain := strings.Replace(string(uri), "https://ncode.syosetu.com/", "", -1)
+	delSlash := strings.Replace(delDomain, "/", "", -1)
+	return delSlash
 }
 
 func NewMetaNovel(author, title, outline string, uri URI, length int) *Novel {
@@ -78,22 +78,22 @@ func NewMetaNovel(author, title, outline string, uri URI, length int) *Novel {
 		Author:    author,
 		Title:     title,
 		Story:     outline,
-		FileTitle: GetID(uri) + "-" + title,
+		FileTitle: convert2FileTitle(uri) + "-" + title,
 		TopUrl:    uri,
-		SiteName:  GetSiteName(uri),
+		SiteName:  getSiteName(uri),
 		// TODO fill
 		NovelType:       0,
 		End:             false,
 		LastUpdate:      time.Time{},
 		NewArrivalsDate: time.Time{},
-		UseSubdirectory: false,
+		UseSubdirectory: length > 0,
 		GeneralFirstUp:  time.Time{},
 		NovelUpdatedAt:  time.Time{},
 		GeneralKastUp:   time.Time{},
 		Length:          length,
 		Suspend:         false,
 		GeneralAllNo:    0,
-		LastCheckAt:     time.Time{},
+		LastCheckAt:     time.Now(),
 		Sub:             nil,
 	}
 }
@@ -101,7 +101,7 @@ func NewMetaNovel(author, title, outline string, uri URI, length int) *Novel {
 func NewSubs(n *Novel, i int, subURI URI) Sub {
 	return Sub{
 		NovelID:      n.ID,
-		Index:        i + 1,
+		IndexID:      i + 1,
 		Href:         subURI,
 		Chapter:      "",
 		Subtitle:     "",

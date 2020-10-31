@@ -72,7 +72,7 @@ func (uc *interactor) Execute(uri metadataModel.URI) ([]string, port.Application
 		meta = metadataModel.NewMetaNovel(author, title, story, uri, subTitles)
 	}
 
-	err = uc.novelMetaRepo.Store(meta)
+	_, err = uc.novelMetaRepo.Store(meta)
 	if err != nil {
 		return nil, port.NewPortError(err, port.RepositoryError)
 	}
@@ -86,7 +86,11 @@ func (uc *interactor) Execute(uri metadataModel.URI) ([]string, port.Application
 	uc.logger.Info("start download")
 	baseURI, _ := url.Parse(string(uri))
 	subURLs := topPage.FindSubURIs()
-	if len(subURLs) > 1 {
+	if meta.Length > 1 {
+		_, err = uc.novelMetaRepo.Store(meta)
+		if err != nil {
+			return nil, port.NewPortError(err, port.RepositoryError)
+		}
 		// uc.outPutPort.OutPUtBoundary(novelOutputData)
 		return uc.downloadSubs(baseURI, subURLs, meta)
 	}
@@ -95,14 +99,15 @@ func (uc *interactor) Execute(uri metadataModel.URI) ([]string, port.Application
 }
 
 func (uc *interactor) downloadSubs(baseURI *url.URL, subURLs []metadataModel.URI, meta *metadataModel.Novel) ([]string, port.ApplicationError) {
+	downloadAt := time.Now()
 	for i, sub := range subURLs {
-		u, e := toAbsURL(baseURI, sub)
+		absURI, e := toAbsURL(baseURI, sub)
 		if e != nil {
 			uc.logger.Error("err occurred", "msg", e.Error())
 			return nil, port.NewPortError(e, port.InvalidParam)
 		}
 
-		pageText, er := uc.crawl.Start(metadataModel.URI(u))
+		pageText, er := uc.crawl.Start(metadataModel.URI(absURI))
 		if er != nil {
 			return nil, port.NewPortError(er, port.CrawlerError)
 		}
@@ -120,7 +125,17 @@ func (uc *interactor) downloadSubs(baseURI *url.URL, subURLs []metadataModel.URI
 			uc.logger.Error("error occurred when store index", "err occurred when store novel", err2.Error())
 			return nil, port.NewPortError(er, port.CrawlerError)
 		}
-
+		if _, err3 := uc.novelMetaRepo.StoreSub(&metadataModel.Sub{
+			NovelID:      meta.ID,
+			IndexID:      i,
+			Href:         sub,
+			Chapter:      d.FindChapterTitle(),
+			Subtitle:     d.FindEpisodeTitle(),
+			SubDate:      downloadAt,
+			SubUpDatedAt: downloadAt,
+			DownloadAt:   downloadAt}); err3 != nil {
+			uc.logger.Error("err occurred when save sub data", "err", err3.Error())
+		}
 		uc.logger.Info(d.FindEpisodeTitle(), "total", len(subURLs), "current", i+1)
 		// todo from config
 		time.Sleep(getSec())
@@ -134,8 +149,8 @@ func getSec() time.Duration {
 	return time.Second * oneSec
 }
 
-func toAbsURL(baseURL *url.URL, weburl metadataModel.URI) (string, error) {
-	parsedURL, err := url.Parse(string(weburl))
+func toAbsURL(baseURL *url.URL, uri metadataModel.URI) (string, error) {
+	parsedURL, err := url.Parse(string(uri))
 	if err != nil {
 		return "", err
 	}
