@@ -1,17 +1,26 @@
-body{
+body {
   writing-mode: vertical-rl;
   -webkit-writing-mode: vertical-rl;
   -epub-writing-mode: vertical-rl;
   text-align: justify;
   font-size:100%;
-  line-height: 0.5em; !important;
+  line-height: 1em; !important;
+  font-family: "@ＭＳ 明朝", "@MS Mincho", "ヒラギノ明朝 ProN W3", "HiraMinProN-W3", serif, sans-serif;
 }
+
 p {
-  line-height: 1em;
+  margin-block-end: 0.0em !important;
+  margin-block-start: 0.0em !important;
+  line-height: 1.5em;
 }
+
 .text-combine {
   -webkit-text-combine: horizontal; /* 実装済 */
   -moz-text-combine-upright: all; /* 実装済(Firefox nightly 版) */
   -ms-text-combine-horizontal:all; /* 実装済 */
   text-combine-upright: all;
+}
+
+.text-three-point-reader {
+  text-align: center;
 }
