@@ -15,6 +15,7 @@ require (
 	github.com/rs/zerolog v1.19.0
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/viper v1.7.0
+	golang.org/x/text v0.3.3
 	gorm.io/driver/sqlite v1.0.8
 	gorm.io/gorm v1.20.5
 )

@@ -6,5 +6,5 @@ storage:
   subdist: "raw"
 
 epub:
-  lang: "日本語"
+  lang: "ja"
   ppd: "rtl" # right to left
