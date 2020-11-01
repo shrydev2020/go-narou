@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"sync"
 
 	"narou/infrastructure/database/internal"
 
@@ -87,12 +88,19 @@ func GetConn() (DBM, error) {
 	return single, nil
 }
 
-// OpenDB is a drop-in replacement for Open().
-func OpenDB(path string) (err error) {
-	gormDB, err := internal.OpenDB(path)
-	single.w = gormDB
+var once sync.Once
 
-	return err
+// OpenDB is a drop-in replacement for Open().
+func OpenDB(path string) error {
+	var ret error
+	once.Do(
+		func() {
+			gormDB, err := internal.OpenDB(path)
+			single.w = gormDB
+			ret = err
+		})
+
+	return ret
 }
 
 // Wrap wraps gorm.DB in an interface.

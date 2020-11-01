@@ -6,7 +6,8 @@ require (
 	github.com/PuerkitoBio/goquery v1.5.1
 	github.com/bmaupin/go-epub v0.5.3
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
-	github.com/google/go-cmp v0.3.0
+	github.com/go-kit/kit v0.10.0 // indirect
+	github.com/google/go-cmp v0.3.1
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
 	github.com/k0kubun/pp v3.0.1+incompatible
 	github.com/labstack/echo/v4 v4.1.17
