@@ -69,3 +69,9 @@ func (r *repo) StoreSub(sub *metadata.Sub) (*metadata.Sub, error) {
 	}
 	return sub, d.Error()
 }
+
+func (r *repo) FindALL() ([]metadata.Novel, error) {
+	var tmp []metadata.Novel
+	d := r.db.Preload("Sub").Find(&tmp).Error()
+	return tmp, d
+}

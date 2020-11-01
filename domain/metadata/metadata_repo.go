@@ -6,4 +6,5 @@ type IRepository interface {
 	Store(*Novel) (*Novel, error)
 	StoreSub(*Sub) (*Sub, error)
 	FindByTopURI(uri URI) (*Novel, error)
+	FindALL() ([]Novel, error)
 }
