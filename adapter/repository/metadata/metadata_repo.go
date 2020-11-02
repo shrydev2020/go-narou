@@ -57,21 +57,26 @@ func (r *repo) Store(n *metadata.Novel) (*metadata.Novel, error) {
 // StoreSubs store sub meta data.
 func (r *repo) StoreSub(sub *metadata.Sub) (*metadata.Sub, error) {
 	var tmp []metadata.Sub
-	d := r.db.
-		Where("novel_id = ?", sub.NovelID).
+	var err error
+	r.db.Where("novel_id = ?", sub.NovelID).
 		Where("index_id = ?", sub.IndexID).Find(&tmp)
+
 	if len(tmp) == 0 {
-		d = r.db.Create(sub)
-	} else {
-		d = r.db.
-			Where("novel_id = ?", sub.NovelID).
-			Where("index_id = ?", sub.IndexID).Save(sub)
+		err = r.db.Create(sub).Error()
+		return sub, err
 	}
-	return sub, d.Error()
+
+	err = r.db.
+		Where("novel_id = ?", sub.NovelID).
+		Where("index_id = ?", sub.IndexID).Save(sub).Error()
+
+	return sub, err
 }
 
 func (r *repo) FindALL() ([]metadata.Novel, error) {
 	var tmp []metadata.Novel
-	d := r.db.Preload("Sub").Find(&tmp).Error()
-	return tmp, d
+	if err := r.db.Preload("Subs").Find(&tmp).Error(); err != nil {
+		panic(err)
+	}
+	return tmp, nil
 }
