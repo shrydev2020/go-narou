@@ -12,7 +12,8 @@ func GRPCMiddleware(grpcServer *grpc.Server) func(next echo.HandlerFunc) echo.Ha
 		return func(c echo.Context) error {
 			r := c.Request()
 			w := c.Response()
-			if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
+			if r.ProtoMajor == 2 &&
+				strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
 				grpcServer.ServeHTTP(w, r)
 				return nil
 			}
