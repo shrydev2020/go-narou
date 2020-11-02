@@ -12,10 +12,10 @@ import (
 	"narou/infrastructure/database"
 )
 
-func GetList(c echo.Context) error {
+func Get(c echo.Context) error {
 	lg := logger.NewLogger(c.Request().Context())
 	lg.Info("main start")
-	defer lg.Debug("main end")
+	defer lg.Info("main end")
 
 	con, _ := database.GetConn()
 	lst, _ := metadata3.NewMetaDataListInteractor(c.Request().Context(),
