@@ -15,6 +15,5 @@ func main() {
 		fmt.Printf("error occurred:%s", err.Error())
 		os.Exit(1)
 	}
-	s := server.New()
-	s.Start()
+	server.New().Start()
 }

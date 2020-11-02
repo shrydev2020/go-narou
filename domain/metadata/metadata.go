@@ -25,7 +25,7 @@ type Novel struct {
 	Suspend         bool
 	GeneralAllNo    int
 	LastCheckAt     time.Time
-	Sub             []Sub // TODO foreign key
+	Subs            []Sub
 }
 
 func (n *Novel) TableName() string {
@@ -94,7 +94,7 @@ func NewMetaNovel(author, title, outline string, uri URI, length int) *Novel {
 		Suspend:         false,
 		GeneralAllNo:    0,
 		LastCheckAt:     time.Now(),
-		Sub:             nil,
+		Subs:            nil,
 	}
 }
 

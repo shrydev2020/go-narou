@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = ".;novel";
+
+message Novels {
+  repeated Novel Novels = 1;
+}
+
+message Novel {
+  enum Kind {
+    UNSPECIFIED = 0;
+    SERIES      = 1;
+    SS          = 2;
+  }
+
+  uint64                    id                = 1;
+  string                    author            = 2;
+  string                    title             = 3;
+  string                    file_title        = 4;
+  string                    top_url           = 5;
+  string                    site_name         = 6;
+  string                    story             = 7;
+  Kind                      novel_type        = 8;
+  bool                      end               = 9;
+  google.protobuf.Timestamp last_update       = 10;
+  google.protobuf.Timestamp new_arrivals_date = 11;
+  bool                      use_subdirectory  = 12;
+  google.protobuf.Timestamp general_first_up  = 13;
+  google.protobuf.Timestamp novel_updated_at  = 14;
+  google.protobuf.Timestamp general_kast_up   = 15;
+  uint64                    length            = 16;
+  bool                      suspend           = 17;
+  uint64                    general_all_no    = 18;
+  google.protobuf.Timestamp last_check_at     = 19;
+  repeated Sub              subs              = 20;
+}
+
+message Sub {
+  uint64                    novel_id       = 1;
+  uint64                    index_id       = 2;
+  string                    href           = 3;
+  string                    chapter        = 4;
+  string                    subtitle       = 5;
+  google.protobuf.Timestamp sub_date       = 6;
+  google.protobuf.Timestamp sub_updated_at = 7;
+  google.protobuf.Timestamp download_at    = 8;
+}
+
+message req {}
+
+service NovelList {
+  rpc Get(req) returns (Novels) {}
+}
