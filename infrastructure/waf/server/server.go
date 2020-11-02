@@ -5,8 +5,6 @@ import (
 
 	"github.com/labstack/echo/v4/middleware"
 
-	narouMiddleware "narou/infrastructure/waf/server/middleware"
-
 	"github.com/labstack/echo/v4"
 	"google.golang.org/grpc"
 
@@ -31,24 +29,22 @@ func (server) Start() {
 	//		<-ctx.Done()
 	//	}()
 
-	lis, err := net.Listen("tcp", ":18080")
-	if err != nil {
-		panic(err)
-	}
-
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	e.Use(narouMiddleware.GRPCMiddleware(grpcServer))
-	e.GET("/novel", novel.GetList)
+	e.GET("/novel", novel.Get)
 
 	go func() {
-		if err2 := grpcServer.Serve(lis); err2 != nil {
-			panic(err2)
+		lis, err := net.Listen("tcp", ":18080")
+		if err != nil {
+			panic(err)
+		}
+		if err := grpcServer.Serve(lis); err != nil {
+			panic(err)
 		}
 	}()
 
 	// Start server
 	if err := e.Start(":1323"); err != nil {
-		e.Logger.Info("shutting down the server")
+		e.Logger.Error("shutting down the server")
 	}
 }
