@@ -18,6 +18,11 @@
     // 出力先などは webpack 側で指定するので本質的には必要なし
     "sourceMap": true,
     "outDir": "./dist",
-    "sourceRoot": "./src"
+    "baseUrl": ".",
+    "paths": {
+      "*": [
+        "src/*"
+      ]
+    }
   }
 }

@@ -13,6 +13,7 @@ module.exports = {
     mode: 'development',
     // エントリポイントとなるコード
     entry: './src/index.tsx',
+    target: 'node',
     // バンドル後の js ファイルの出力先
     output: {
         path: path.resolve(__dirname, 'dist'),
@@ -20,7 +21,11 @@ module.exports = {
     },
     // import 時に読み込むファイルの拡張子
     resolve: {
-        extensions: ['.js', '.json', '.ts', '.tsx']
+        extensions: [
+            '.js',
+            '.json',
+            '.ts',
+            '.tsx']
     },
     // ソースマップファイルの出力設定
     devtool: 'source-map',
@@ -29,14 +34,14 @@ module.exports = {
             // TypeScript ファイル (.ts/.tsx) を変換できるようにする
             {
                 test: /\.ts(x?)$/,
-                loader: "esbuild-loader",
+                loader: "ts-loader",
                 include: path.resolve(__dirname, 'src'),
+                exclude: /node_modules/,
                 options: {
-                    loader: 'tsx', // Or 'ts' if you don't need tsx
-                    target: 'es2015',
+                    configFile: "tsconfig.json",
                 },
-                exclude: /node_modules/
-            }, {
+
+            },{
                 test: /\.js(x?)$/,
                 loader: 'babel-loader',
                 exclude: /node_modules/,
