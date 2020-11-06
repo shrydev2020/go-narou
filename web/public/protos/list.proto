@@ -1,9 +1,6 @@
 syntax = "proto3";
-package novel;
 
 import "google/protobuf/timestamp.proto";
-
-option go_package = ".;novel";
 
 message Novels {
   repeated Novel novels = 1;

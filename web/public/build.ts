@@ -9,7 +9,7 @@ const options = {
     target: 'es2016',
     platform: 'browser',
     outdir: path.resolve(__dirname, 'dist'),
-    tsconfig: path.resolve(__dirname, 'tsconfig.json')
+    tsconfig: path.resolve(__dirname, 'tsconfig.json'),
 }
 // Buildの実行
 // @ts-ignore

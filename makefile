@@ -3,15 +3,16 @@
 build:
 	go build -o narou
 
-.PHONY: genproto
-genproto:
-	find . -name "*.proto" | xargs clang-format -i  -style=file
-	find . -name "*.proto" | xargs \
-	 protoc --go_out=. --go_opt=paths=source_relative \
-	  --go-grpc_out=. --go-grpc_opt=paths=source_relative
+.PHONY: genProto
+genProto:
+	find ./usecase -name "*.proto" | xargs clang-format -i  -style=file
+	find ./usecase -name "*.proto" | xargs \
+	 protoc \
+		--go_out=. --go_opt=paths=source_relative \
+		--go-grpc_out=. --go-grpc_opt=paths=source_relative
 
-.PHONY: fmtproto
-fmtproto:
+.PHONY: fmtProto
+fmtProto:
 	find . -name "*.proto" | xargs clang-format -i  -style=file
 
 .PHONY: help

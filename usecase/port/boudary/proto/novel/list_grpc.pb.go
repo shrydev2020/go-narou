@@ -30,7 +30,7 @@ func NewNovelListClient(cc grpc.ClientConnInterface) NovelListClient {
 
 func (c *novelListClient) Get(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Novels, error) {
 	out := new(Novels)
-	err := c.cc.Invoke(ctx, "/NovelList/Get", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/novel.NovelList/Get", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +75,7 @@ func _NovelList_Get_Handler(srv interface{}, ctx context.Context, dec func(inter
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/NovelList/Get",
+		FullMethod: "/novel.NovelList/Get",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(NovelListServer).Get(ctx, req.(*Req))
@@ -84,7 +84,7 @@ func _NovelList_Get_Handler(srv interface{}, ctx context.Context, dec func(inter
 }
 
 var _NovelList_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "NovelList",
+	ServiceName: "novel.NovelList",
 	HandlerType: (*NovelListServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

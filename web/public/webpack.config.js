@@ -1,5 +1,6 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const {ESBuildPlugin} = require('esbuild-loader');
 
 module.exports = {
     cache: {
@@ -28,8 +29,12 @@ module.exports = {
             // TypeScript ファイル (.ts/.tsx) を変換できるようにする
             {
                 test: /\.ts(x?)$/,
-                use: "ts-loader",
+                loader: "esbuild-loader",
                 include: path.resolve(__dirname, 'src'),
+                options: {
+                    loader: 'tsx', // Or 'ts' if you don't need tsx
+                    target: 'es2015',
+                },
                 exclude: /node_modules/
             }, {
                 test: /\.js(x?)$/,
@@ -39,6 +44,7 @@ module.exports = {
         ]
     },
     plugins: [
+        new ESBuildPlugin(),
         // HTML ファイルの出力設定
         new HtmlWebpackPlugin({
             template: './src/index.html'

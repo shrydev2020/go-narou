@@ -3,9 +3,8 @@ package server
 import (
 	"net"
 
-	"github.com/labstack/echo/v4/middleware"
-
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"google.golang.org/grpc"
 
 	"narou/infrastructure/waf/server/novel"
