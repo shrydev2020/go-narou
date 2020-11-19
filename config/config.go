@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/spf13/viper"
 )
@@ -44,25 +45,34 @@ type IConfigure interface {
 	GetEpubSetting() (lang, ppd string)
 }
 
-func InitConfigure() IConfigure {
-	viper.SetConfigName("config")
-	viper.SetConfigType("yml")
-	viper.AddConfigPath(".")
-	viper.WatchConfig()
-	viper.AutomaticEnv()
+var (
+	once sync.Once
+	c    config
+)
 
-	if err := viper.ReadInConfig(); err != nil {
-		fmt.Println("config file read error")
-		fmt.Println(err)
-		panic(err)
-	}
-
-	var c config
-	if err := viper.Unmarshal(&c); err != nil {
-		fmt.Println("config file Unmarshal error")
-		fmt.Println(err)
-		panic(err)
-	}
-
+func GetConfigure() IConfigure {
+	initConfigure()
 	return &c
+}
+
+func initConfigure() {
+	once.Do(func() {
+		viper.SetConfigName("config")
+		viper.SetConfigType("yml")
+		viper.AddConfigPath(".")
+		viper.WatchConfig()
+		viper.AutomaticEnv()
+
+		if err := viper.ReadInConfig(); err != nil {
+			fmt.Println("config file read error")
+			fmt.Println(err)
+			panic(err)
+		}
+
+		if err := viper.Unmarshal(&c); err != nil {
+			fmt.Println("config file Unmarshal error")
+			fmt.Println(err)
+			panic(err)
+		}
+	})
 }

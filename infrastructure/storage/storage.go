@@ -12,8 +12,8 @@ type Manager interface {
 	GetSubDist() string
 }
 
-func NewManager() Manager {
-	dist, subDist := config.InitConfigure().GetStorageConfig()
+func NewManager(configure config.IConfigure) Manager {
+	dist, subDist := configure.GetStorageConfig()
 	return &storageManager{dist: dist, subDist: subDist}
 }
 

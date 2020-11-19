@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	var cfg = config.InitConfigure()
+	var cfg = config.GetConfigure()
 	if err := database.OpenDB(cfg.GetDBConfig()); err != nil {
 		fmt.Printf("error occurred:%s", err.Error())
 		os.Exit(1)

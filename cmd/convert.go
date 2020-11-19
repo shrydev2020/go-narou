@@ -31,13 +31,14 @@ var convertCmd = &cobra.Command{
 		if err != nil {
 			panic(err)
 		}
-
+		cfg := config.GetConfigure()
 		cvt := convert.NewConvertInteractor(ctx,
 			lg,
 			metadataRepo.NewRepository(db),
-			novel.NewRepository(storage.NewManager()),
-			epub.NewRepository(storage.NewManager()),
-			config.InitConfigure())
+			novel.NewRepository(storage.NewManager(cfg)),
+			epub.NewRepository(storage.NewManager(cfg)),
+			cfg,
+			DependencyInjection(args[0]))
 
 		return controller.NewConvertController(cvt, lg).Execute(args)
 	},

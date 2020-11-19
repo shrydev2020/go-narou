@@ -9,7 +9,7 @@ import (
 
 	metadataModel "narou/domain/metadata"
 	"narou/domain/novel"
-	query2 "narou/domain/query"
+	"narou/domain/query"
 	"narou/infrastructure/log"
 	"narou/interface/gateway/crawl"
 	"narou/usecase/port"
@@ -26,7 +26,7 @@ type interactor struct {
 	novelMetaRepo metadataModel.IRepository
 	novelRp       novel.IRepository
 	crawl         crawl.Crawler
-	queryService  func(string) (query2.IQuery, error)
+	queryService  func(string) (query.IQuery, error)
 	outPutPort    download.OutputPorter
 }
 
@@ -37,7 +37,7 @@ func NewDownloadInteractor(
 	novelRepo novel.IRepository,
 	outputPort download.OutputPorter,
 	crawl crawl.Crawler,
-	queryService func(string) (query2.IQuery, error)) Interactor {
+	queryService func(string) (query.IQuery, error)) Interactor {
 	return &interactor{
 		ctx:           ctx,
 		logger:        lg,
