@@ -3,10 +3,10 @@ package download
 import (
 	"context"
 	"net/url"
+	"regexp"
 	"strconv"
 	"time"
 
-	"narou/adapter/query"
 	metadataModel "narou/domain/metadata"
 	"narou/domain/novel"
 	query2 "narou/domain/query"
@@ -36,14 +36,15 @@ func NewDownloadInteractor(
 	metaDataRepo metadataModel.IRepository,
 	novelRepo novel.IRepository,
 	outputPort download.OutputPorter,
-	crawl crawl.Crawler) Interactor {
+	crawl crawl.Crawler,
+	queryService func(string) (query2.IQuery, error)) Interactor {
 	return &interactor{
 		ctx:           ctx,
 		logger:        lg,
 		novelMetaRepo: metaDataRepo,
 		novelRp:       novelRepo,
 		crawl:         crawl,
-		queryService:  query.New,
+		queryService:  queryService,
 		outPutPort:    outputPort,
 	}
 }
@@ -54,7 +55,7 @@ func (uc *interactor) Execute(uri metadataModel.URI) ([]string, port.Application
 		return nil, port.NewPortError(err, port.CrawlerError)
 	}
 
-	topPage, err := query.New(index)
+	topPage, err := uc.queryService(index)
 	if err != nil {
 		return nil, port.NewPortError(err, port.CrawlerError)
 	}
@@ -100,6 +101,7 @@ func (uc *interactor) Execute(uri metadataModel.URI) ([]string, port.Application
 
 func (uc *interactor) downloadSubs(baseURI *url.URL, subURLs []metadataModel.URI, meta *metadataModel.Novel) ([]string, port.ApplicationError) {
 	downloadAt := time.Now()
+	re := regexp.MustCompile("/")
 	for i, sub := range subURLs {
 		absURI, e := toAbsURL(baseURI, sub)
 		if e != nil {
@@ -112,14 +114,14 @@ func (uc *interactor) downloadSubs(baseURI *url.URL, subURLs []metadataModel.URI
 			return nil, port.NewPortError(er, port.CrawlerError)
 		}
 
-		d, err := query.New(pageText)
+		query, err := uc.queryService(pageText)
 		if err != nil {
 			return nil, port.NewPortError(err, port.CrawlerError)
 		}
 
 		err2 := uc.novelRp.Store(meta.SiteName,
 			meta.Title,
-			strconv.Itoa(i+1)+" "+d.FindEpisodeTitle()+".html",
+			strconv.Itoa(i+1)+" "+re.ReplaceAllString(query.FindEpisodeTitle(), ":")+".html",
 			pageText)
 		if err2 != nil {
 			uc.logger.Error("error occurred when store index", "err occurred when store novel", err2.Error())
@@ -129,14 +131,14 @@ func (uc *interactor) downloadSubs(baseURI *url.URL, subURLs []metadataModel.URI
 			NovelID:      meta.ID,
 			IndexID:      i,
 			Href:         sub,
-			Chapter:      d.FindChapterTitle(),
-			Subtitle:     d.FindEpisodeTitle(),
+			Chapter:      query.FindChapterTitle(),
+			Subtitle:     query.FindEpisodeTitle(),
 			SubDate:      downloadAt,
 			SubUpDatedAt: downloadAt,
 			DownloadAt:   downloadAt}); err3 != nil {
 			uc.logger.Error("err occurred when save sub data", "err", err3.Error())
 		}
-		uc.logger.Info(d.FindEpisodeTitle(), "total", len(subURLs), "current", i+1)
+		uc.logger.Info(query.FindEpisodeTitle(), "total", len(subURLs), "current", i+1)
 		// todo from config
 		time.Sleep(getSec())
 	}

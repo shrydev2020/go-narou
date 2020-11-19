@@ -1,4 +1,4 @@
-package query
+package hameln
 
 import (
 	"io/ioutil"
@@ -10,7 +10,7 @@ import (
 	"narou/domain/query"
 )
 
-type narouQuery struct {
+type hamelnQuery struct {
 	d *goquery.Document
 }
 
@@ -19,43 +19,41 @@ func New(html string) (query.IQuery, error) {
 	d, err := goquery.NewDocumentFromReader(cls)
 
 	if err != nil {
-		return &narouQuery{}, err
+		return &hamelnQuery{}, err
 	}
 
-	return &narouQuery{
+	return &hamelnQuery{
 		d: d,
 	}, nil
 }
 
 // FindTitle return Novel Tile.
-func (n *narouQuery) FindTitle() string {
-	return n.d.Find(".novel_title").Text()
+func (n *hamelnQuery) FindTitle() string {
+	return n.d.Find("span[itemprop=name]").Text()
 }
 
 // FindAuthor return author name.
-func (n *narouQuery) FindAuthor() string {
-	return n.d.Find(".novel_writername > a").Text()
+func (n *hamelnQuery) FindAuthor() string {
+	return n.d.Find("span[itemprop=author]").Text()
 }
 
 // FindOverView return novel's over view.
-func (n *narouQuery) FindOverView() string {
-	b := ""
-
-	n.d.Find("div#novel_ex").Each(func(i int, selection *goquery.Selection) {
-		tmp, _ := selection.Html()
-		if tmp == "<br/>" {
-			return
-		}
-		b += "<p>" + tmp + "</p>"
-	})
-	return b
+func (n *hamelnQuery) FindOverView() string {
+	story := ""
+	n.d.Find("div.ss").Each(
+		func(i int, selection *goquery.Selection) {
+			if i == 1 {
+				story = selection.Text()
+			}
+		})
+	return story
 }
 
 // FindNumberOfEpisodes return how many episodes are there.
-func (n *narouQuery) FindNumberOfEpisodes() int {
+func (n *hamelnQuery) FindNumberOfEpisodes() int {
 	ret := 0
 
-	n.d.Find(".novel_sublist2").
+	n.d.Find("tbody > tr > td > a").
 		Each(func(i int, selection *goquery.Selection) {
 			ret++
 		})
@@ -64,12 +62,12 @@ func (n *narouQuery) FindNumberOfEpisodes() int {
 }
 
 // FindSubURIs return episode uri like "/n5378gc/"
-func (n *narouQuery) FindSubURIs() []metadata.URI {
+func (n *hamelnQuery) FindSubURIs() []metadata.URI {
 	var subs []metadata.URI
 
-	n.d.Find(".novel_sublist2").
+	n.d.Find("tbody > tr > td > a").
 		Each(func(i int, selection *goquery.Selection) {
-			uri, _ := selection.Find(".subtitle  a").Attr("href")
+			uri, _ := selection.Attr("href")
 			subs = append(subs, metadata.URI(uri))
 		})
 
@@ -77,20 +75,34 @@ func (n *narouQuery) FindSubURIs() []metadata.URI {
 }
 
 // FindChapterTitle return chapter tile.
-func (n *narouQuery) FindChapterTitle() string {
-	return n.d.Find(".chapter_title").Text()
+func (n *hamelnQuery) FindChapterTitle() string {
+	title := ""
+	n.d.Find("span[style=\"font-size:120%\"]").Each(
+		func(i int, selection *goquery.Selection) {
+			if i == 1 {
+				title = selection.Text()
+			}
+		})
+	return title
 }
 
 // FindEpisodeTitle return each episode title.
-func (n *narouQuery) FindEpisodeTitle() string {
-	return n.d.Find(".novel_subtitle").Text()
+func (n *hamelnQuery) FindEpisodeTitle() string {
+	title := ""
+	n.d.Find("span[style=\"font-size:120%\"]").Each(
+		func(i int, selection *goquery.Selection) {
+			if i == 1 {
+				title = selection.Text()
+			}
+		})
+	return title
 }
 
 // FindBody return novel body.
-func (n *narouQuery) FindBody() string {
+func (n *hamelnQuery) FindBody() string {
 	b := ""
 
-	n.d.Find("div#novel_honbun").
+	n.d.Find("div#honbun").
 		Find("p").
 		Each(func(i int, selection *goquery.Selection) {
 			tmp, _ := selection.Html()
@@ -104,16 +116,14 @@ func (n *narouQuery) FindBody() string {
 }
 
 // FindPreface return episode preface.
-func (n *narouQuery) FindPreface() string {
+func (n *hamelnQuery) FindPreface() string {
 	b := ""
-	n.d.Find(".novel_view#novel_p").Each(func(_ int, selection *goquery.Selection) {
-		b += selection.Text()
-	})
+	b = n.d.Find("#maegaki").Text()
 	return b
 }
 
 // FindAfterword return episode afterword.
-func (n *narouQuery) FindAfterword() string {
+func (n *hamelnQuery) FindAfterword() string {
 	b := ""
 	n.d.Find(".novel_view#novel_a").Each(func(_ int, selection *goquery.Selection) {
 		b += selection.Text()

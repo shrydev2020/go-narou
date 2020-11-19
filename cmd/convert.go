@@ -3,18 +3,17 @@ package cmd
 import (
 	"errors"
 
-	"narou/infrastructure/database"
+	"github.com/spf13/cobra"
 
 	"narou/adapter/logger"
 	"narou/adapter/repository/epub"
 	metadataRepo "narou/adapter/repository/metadata"
 	"narou/adapter/repository/novel"
 	"narou/config"
+	"narou/infrastructure/database"
 	"narou/infrastructure/storage"
 	"narou/interface/controller"
 	"narou/usecase/interactor/convert"
-
-	"github.com/spf13/cobra"
 )
 
 // convertCmd represents the convert command

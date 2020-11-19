@@ -3,7 +3,8 @@ package metadata
 import (
 	"context"
 
-	"narou/adapter/query"
+	"narou/adapter/query/narou"
+
 	metadataModel "narou/domain/metadata"
 	query2 "narou/domain/query"
 	"narou/infrastructure/log"
@@ -32,7 +33,7 @@ func NewMetaDataListInteractor(
 		ctx:           ctx,
 		logger:        lg,
 		novelMetaRepo: metaDataRepo,
-		queryService:  query.New,
+		queryService:  narou.New,
 		outPutPort:    outputPort,
 	}
 }

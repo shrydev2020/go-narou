@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"regexp"
 
+	"narou/adapter/query/narou"
+
 	"github.com/logrusorgru/aurora"
 
-	"narou/adapter/query"
 	"narou/config"
 	"narou/domain/epub"
 	metadataModel "narou/domain/metadata"
@@ -44,7 +45,7 @@ func NewConvertInteractor(
 		logger:       lg,
 		novelMetaRp:  metaDataRepo,
 		novelRp:      novelRepo,
-		queryService: query.New,
+		queryService: narou.New,
 		epubRp:       epubRp,
 		cfg:          cfg,
 	}
@@ -107,7 +108,7 @@ func (uc *interactor) newEpubData(model epub.IEpub, data []epubSection) (epub.IE
 func convertText2epubData(texts []string, uri metadataModel.URI) []epubSection {
 	var data []epubSection
 	for _, txt := range texts {
-		d, _ := query.New(txt)
+		d, _ := narou.New(txt)
 		overView := d.FindOverView()
 		if len(overView) > 0 {
 			data = append(data, epubSection{
@@ -132,7 +133,7 @@ func convertText2epubData(texts []string, uri metadataModel.URI) []epubSection {
 }
 
 func newCoverPage(txt string) epubSection {
-	d, _ := query.New(txt)
+	d, _ := narou.New(txt)
 	return epubSection{
 		chapterTitle: "",
 		subTitle:     d.FindTitle(),
