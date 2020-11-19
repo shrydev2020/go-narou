@@ -14,8 +14,9 @@ func validate(args []string) error {
 		return errors.New("more args")
 	}
 
-	if !strings.Contains(args[0], "https://ncode.syosetu.com/") {
-		return errors.New("it is not narou")
+	if !strings.Contains(args[0], "https://ncode.syosetu.com/") &&
+		!strings.Contains(args[0], "https://syosetu.org/") {
+		return errors.New("it is not target site")
 	}
 
 	return nil

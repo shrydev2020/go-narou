@@ -13,7 +13,7 @@ func Test_validate(t *testing.T) {
 		wantErr bool
 	}{
 		{name: "missing args", args: args{args: nil}, wantErr: true},
-		{name: "too many args", args: args{args: []string{"a","b"}}, wantErr: true},
+		{name: "too many args", args: args{args: []string{"a", "b"}}, wantErr: true},
 		{name: "not narou", args: args{args: []string{"http://dummy"}}, wantErr: true},
 		{name: "not narou", args: args{args: []string{"https://ncode.syosetu.com/"}}, wantErr: false},
 	}

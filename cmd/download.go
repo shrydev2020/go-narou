@@ -2,15 +2,19 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 
 	"narou/adapter/logger"
+	"narou/adapter/query/hameln"
+	"narou/adapter/query/narou"
 	"narou/adapter/repository/epub"
 	metadataRepo "narou/adapter/repository/metadata"
 	"narou/adapter/repository/novel"
 	"narou/config"
 	"narou/domain/metadata"
+	"narou/domain/query"
 	"narou/infrastructure/database"
 	"narou/infrastructure/storage"
 	"narou/interface/controller"
@@ -50,7 +54,8 @@ func executeDownload(c *cobra.Command, args []string) error {
 		metadataRepo.NewRepository(db),
 		novel.NewRepository(storage.NewManager()),
 		nil,
-		crawl.NewCrawler(lg))
+		crawl.NewCrawler(lg),
+		di(args[0]))
 
 	ret, err := controller.NewDownloadController(a, lg).Execute(args)
 	if err != nil {
@@ -74,4 +79,13 @@ func executeDownload(c *cobra.Command, args []string) error {
 		m.SiteName, m.Title, m.Title)
 	lg.Info("finis!", "msg", msg)
 	return nil
+}
+
+func di(uri string) func(string) (query.IQuery, error) {
+	if strings.Contains(uri, "https://ncode.syosetu.com/") {
+		return narou.New
+	} else if strings.Contains(uri, "https://syosetu.org/") {
+		return hameln.New
+	}
+	panic("not implement")
 }
