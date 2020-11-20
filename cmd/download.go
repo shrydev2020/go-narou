@@ -47,15 +47,15 @@ func executeDownload(c *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-
+	cfg := config.GetConfigure()
 	a := download.NewDownloadInteractor(
 		ctx,
 		lg,
 		metadataRepo.NewRepository(db),
-		novel.NewRepository(storage.NewManager()),
+		novel.NewRepository(storage.NewManager(cfg)),
 		nil,
 		crawl.NewCrawler(lg),
-		di(args[0]))
+		DependencyInjection(args[0]))
 
 	ret, err := controller.NewDownloadController(a, lg).Execute(args)
 	if err != nil {
@@ -67,21 +67,22 @@ func executeDownload(c *cobra.Command, args []string) error {
 		ctx,
 		lg,
 		metadataRepo.NewRepository(db),
-		novel.NewRepository(storage.NewManager()),
-		epub.NewRepository(storage.NewManager()),
-		config.InitConfigure())
+		novel.NewRepository(storage.NewManager(cfg)),
+		epub.NewRepository(storage.NewManager(cfg)),
+		config.GetConfigure(),
+		DependencyInjection(args[0]))
 
 	if err := controller.NewConvertController(cvt, lg).Execute(args); err != nil {
 		lg.Error("err", "error", err.Error())
 	}
 	m, _ := metadataRepo.NewRepository(db).FindByTopURI(metadata.URI(args[0]))
-	msg := fmt.Sprintf("convert completed. epub generated at %s/%s/%s/%s.epub", storage.NewManager().GetDist(),
+	msg := fmt.Sprintf("convert completed. epub generated at %s/%s/%s/%s.epub", storage.NewManager(cfg).GetDist(),
 		m.SiteName, m.Title, m.Title)
 	lg.Info("finis!", "msg", msg)
 	return nil
 }
 
-func di(uri string) func(string) (query.IQuery, error) {
+func DependencyInjection(uri string) func(string) (query.IQuery, error) {
 	if strings.Contains(uri, "https://ncode.syosetu.com/") {
 		return narou.New
 	} else if strings.Contains(uri, "https://syosetu.org/") {

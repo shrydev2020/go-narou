@@ -2,7 +2,6 @@ package convert
 
 import (
 	"context"
-	"fmt"
 	"regexp"
 
 	"narou/adapter/query/narou"
@@ -13,7 +12,7 @@ import (
 	"narou/domain/epub"
 	metadataModel "narou/domain/metadata"
 	"narou/domain/novel"
-	narouQuery "narou/domain/query"
+	"narou/domain/query"
 	"narou/infrastructure/log"
 	"narou/usecase/port"
 )
@@ -28,7 +27,7 @@ type interactor struct {
 	novelMetaRp  metadataModel.IRepository
 	novelRp      novel.IRepository
 	epubRp       epub.IRepository
-	queryService func(string) (narouQuery.IQuery, error)
+	queryService func(string) (query.IQuery, error)
 	cfg          config.IConfigure
 }
 
@@ -38,14 +37,15 @@ func NewConvertInteractor(
 	metaDataRepo metadataModel.IRepository,
 	novelRepo novel.IRepository,
 	epubRp epub.IRepository,
-	cfg config.IConfigure) Interactor {
+	cfg config.IConfigure,
+	queryService func(string) (query.IQuery, error)) Interactor {
 
 	return &interactor{
 		ctx:          ctx,
 		logger:       lg,
 		novelMetaRp:  metaDataRepo,
 		novelRp:      novelRepo,
-		queryService: narou.New,
+		queryService: queryService,
 		epubRp:       epubRp,
 		cfg:          cfg,
 	}
@@ -60,7 +60,7 @@ func (uc *interactor) Execute(uri metadataModel.URI) port.ApplicationError {
 		return port.NewPortError(err, port.RepositoryError)
 	}
 
-	data := convertText2epubData(uc.novelRp.FindByNobelSiteAndTitle(meta.SiteName, meta.Title), uri)
+	data := uc.convertText2epubData(uc.novelRp.FindByNobelSiteAndTitle(meta.SiteName, meta.Title), uri)
 
 	epubModel, err := uc.newEpubData(epub.NewEpub(uc.ctx, uc.cfg).New(meta.Author, meta.Title), data)
 
@@ -105,12 +105,12 @@ func (uc *interactor) newEpubData(model epub.IEpub, data []epubSection) (epub.IE
 	return model, nil
 }
 
-func convertText2epubData(texts []string, uri metadataModel.URI) []epubSection {
+func (uc *interactor) convertText2epubData(texts []string, uri metadataModel.URI) []epubSection {
 	var data []epubSection
-	for _, txt := range texts {
-		d, _ := narou.New(txt)
+	for i, txt := range texts {
+		d, _ := uc.queryService(txt)
 		overView := d.FindOverView()
-		if len(overView) > 0 {
+		if i == 0 && len(overView) > 0 {
 			data = append(data, epubSection{
 				chapterTitle: "あらすじ",
 				subTitle:     "あらすじ",
@@ -145,7 +145,7 @@ func addAuthorCSS(author string) string {
 	return `<div id="author" class="author">` + author + `</div>`
 }
 
-func getPrefaceCSS(d narouQuery.IQuery) string {
+func getPrefaceCSS(d query.IQuery) string {
 	p := d.FindPreface()
 	if len(p) == 0 {
 		return ""
@@ -153,7 +153,7 @@ func getPrefaceCSS(d narouQuery.IQuery) string {
 	return `<div id="preface=%s" class="episode-preface">` + p + `</div>`
 }
 
-func getAfterWordCSS(d narouQuery.IQuery) string {
+func getAfterWordCSS(d query.IQuery) string {
 	aw := d.FindAfterword()
 	if len(aw) == 0 {
 		return ""
@@ -161,14 +161,14 @@ func getAfterWordCSS(d narouQuery.IQuery) string {
 	return `<div id="afterword-%s" class="episode-afterword">` + aw + `</div>`
 }
 
-func getEpisodeTitle(d narouQuery.IQuery) string {
+func getEpisodeTitle(d query.IQuery) string {
 	return `<div id="episode-title" class="episode-title">` +
 		digitPatternTil3.ReplaceAllString(d.FindEpisodeTitle(),
 			`<span class="text-combine">${key}</span>`) +
 		`</div>`
 }
 
-var digitPatternTil2 = regexp.MustCompile(`(?P<key>\b(\d{1,2})\b)`)
+var digitPatternTil2 = regexp.MustCompile(`(?P<key>\b(\d{1,2})\b)`) // `Word boundary {1 or 2 digit} Word boundary` will hit
 var digitPatternTil3 = regexp.MustCompile(`(?P<key>\b(\d{1,3})\b)`)
 var exclamationAndQuestionPattern = regexp.MustCompile(`(?P<key>(!!|!\?|\?|!|！！|！？|？|！))`)
 
@@ -178,7 +178,7 @@ func addCoverCSS(cover string) string {
 
 func addCSSClass(body string) string {
 	tmp := digitPatternTil2.ReplaceAllString(
-		body, fmt.Sprintf(`<span class="text-combine">${key}</span>`))
+		body, `<span class="text-combine">${key}</span>`)
 	return exclamationAndQuestionPattern.ReplaceAllString(
 		tmp, `<span class="text-combine">${key}</span>`)
 }

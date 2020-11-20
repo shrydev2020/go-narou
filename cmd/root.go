@@ -21,7 +21,7 @@ var rootCmd = &cobra.Command{
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	c := config.InitConfigure()
+	c := config.GetConfigure()
 	if err := database.OpenDB(c.GetDBConfig()); err != nil {
 		fmt.Printf("error occurred:%s", err.Error())
 		os.Exit(1)
