@@ -2,9 +2,9 @@ package convert
 
 import (
 	"context"
+	"fmt"
 	"regexp"
-
-	"narou/adapter/query/narou"
+	"strconv"
 
 	"github.com/logrusorgru/aurora"
 
@@ -127,13 +127,33 @@ func (uc *interactor) convertText2epubData(texts []string, uri metadataModel.URI
 				getAfterWordCSS(d)),
 		})
 	}
-
-	ret := append([]epubSection{newCoverPage(texts[0])}, data...)
+	tmp := uc.newIndexPage(texts)
+	ret := append([]epubSection{uc.newCoverPage(texts[0]), tmp}, data...)
 	return ret
 }
 
-func newCoverPage(txt string) epubSection {
-	d, _ := narou.New(txt)
+func (uc *interactor) newIndexPage(texts []string) epubSection {
+	body := `<div id="index-page"><ol>`
+	for i, text := range texts {
+		d, _ := uc.queryService(text)
+		if i == 0 {
+			// i == 0 cover, 1==index, 2 == あらすじ
+			body += fmt.Sprintf(`<ul><a href="section%04s.xhtml">`, strconv.Itoa(i+2)) + "INDEX" + `</a></ul>`
+			body += fmt.Sprintf(`<ul><a href="section%04s.xhtml">`, strconv.Itoa(i+3)) + "あらすじ" + `</a></ul>`
+			continue
+		}
+
+		body += fmt.Sprintf(`<ul><a href="section%04s.xhtml">`, strconv.Itoa(i+3)) + d.FindEpisodeTitle() + `</a></ul>`
+	}
+	return epubSection{
+		chapterTitle: "",
+		subTitle:     "index",
+		body:         body + "</ol></div>",
+	}
+}
+
+func (uc *interactor) newCoverPage(txt string) epubSection {
+	d, _ := uc.queryService(txt)
 	return epubSection{
 		chapterTitle: "",
 		subTitle:     d.FindTitle(),
