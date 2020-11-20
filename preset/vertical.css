@@ -67,3 +67,8 @@ p {
     margin-right: 4em;
     font-size: 80%;
 }
+
+ul {
+    list-style-type: square;
+    padding-right: 0.5em;
+}
