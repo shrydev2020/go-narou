@@ -43,7 +43,11 @@ a<span class="text-combine">！？</span>b
 `},
 			want: `
 「いいい<span class="text-combine">!?</span>　ろろろろ<span class="text-combine">！</span>　はははは<span class="text-combine">!!</span>」
-`},
+`}, {
+			name: `<span style="font-size:120%"> 第11話　B：70　W：52　H：71</span>`,
+			args: args{body: `<span style="font-size:120%"> 第11話　B：70　W：52　H：71</span>`},
+			want: `<span style="font-size:120%"> 第<span class="text-combine">11</span>話　B：<span class="text-combine">70</span>　W：<span class="text-combine">52</span>　H：<span class="text-combine">71</span></span>`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

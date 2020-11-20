@@ -114,17 +114,17 @@ func (uc *interactor) convertText2epubData(texts []string, uri metadataModel.URI
 			data = append(data, epubSection{
 				chapterTitle: "あらすじ",
 				subTitle:     "あらすじ",
-				body:         "<hr/>" + overView + `<br/>Refer: <a href="` + string(uri) + `">` + string(uri) + `</a><hr/>`,
+				body:         "<hr />" + overView + `<br /> Refer: <a href="` + string(uri) + `">` + string(uri) + `</a>`,
 			})
 			continue
 		}
 		data = append(data, epubSection{
 			chapterTitle: d.FindChapterTitle(),
 			subTitle:     d.FindEpisodeTitle(),
-			body: addCSSClass(getEpisodeTitle(d) +
-				getPrefaceCSS(d) +
-				d.FindBody() +
-				getAfterWordCSS(d)),
+			body: getEpisodeTitle(d) + addCSSClass(
+				getPrefaceCSS(d)+
+					d.FindBody()+
+					getAfterWordCSS(d)),
 		})
 	}
 	tmp := uc.newIndexPage(texts)
@@ -138,12 +138,12 @@ func (uc *interactor) newIndexPage(texts []string) epubSection {
 		d, _ := uc.queryService(text)
 		if i == 0 {
 			// i == 0 cover, 1==index, 2 == あらすじ
-			body += fmt.Sprintf(`<ul><a href="section%04s.xhtml">`, strconv.Itoa(i+2)) + "INDEX" + `</a></ul>`
-			body += fmt.Sprintf(`<ul><a href="section%04s.xhtml">`, strconv.Itoa(i+3)) + "あらすじ" + `</a></ul>`
+			body += fmt.Sprintf(`<li><a href="section%04s.xhtml">`, strconv.Itoa(i+2)) + "INDEX" + `</a></li>`
+			body += fmt.Sprintf(`<li><a href="section%04s.xhtml">`, strconv.Itoa(i+3)) + "あらすじ" + `</a></li>`
 			continue
 		}
 
-		body += fmt.Sprintf(`<ul><a href="section%04s.xhtml">`, strconv.Itoa(i+3)) + d.FindEpisodeTitle() + `</a></ul>`
+		body += fmt.Sprintf(`<li><a href="section%04s.xhtml">`, strconv.Itoa(i+3)) + d.FindEpisodeTitle() + `</a></li>`
 	}
 	return epubSection{
 		chapterTitle: "",
