@@ -51,9 +51,30 @@ a<span class="text-combine">！？</span>b
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := addCSSClass(tt.args.body)
+			got := newBodyWithCSS(tt.args.body)
 			if diff := cmp.Diff(got, tt.want); diff != "" {
-				t.Errorf("addCSSClass differs: (-got +want)\n%s", diff)
+				t.Errorf("newBodyWithCSS differs: (-got +want)\n%s", diff)
+			}
+		})
+	}
+}
+
+func Test_convertDoubleQuote2DoubleInDesignDoubleQuote(t *testing.T) {
+	type args struct {
+		s string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{name: `aaa "hoge" -> aaa 『hoge』`, args: args{s: `aaa 『hoge』`}, want: "aaa 『hoge』"},
+		{name: `aaa "hoge" bbb "fuga" -> aaa 『hoge』 bbb 『fuga』`, args: args{s: `aaa 『hoge』`}, want: "aaa 『hoge』"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := convertDoubleQuote2DoubleInDesignDoubleQuote(tt.args.s); got != tt.want {
+				t.Errorf("convertDoubleQuote2DoubleInDesignDoubleQuote() = %v, want %v", got, tt.want)
 			}
 		})
 	}

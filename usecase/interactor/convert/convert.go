@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/logrusorgru/aurora"
 
@@ -121,10 +122,11 @@ func (uc *interactor) convertText2epubData(texts []string, uri metadataModel.URI
 		data = append(data, epubSection{
 			chapterTitle: d.FindChapterTitle(),
 			subTitle:     d.FindEpisodeTitle(),
-			body: getEpisodeTitle(d) + addCSSClass(
-				getPrefaceCSS(d)+
-					d.FindBody()+
-					getAfterWordCSS(d)),
+			body: addEpisodeTitleCSS(d.FindEpisodeTitle()) +
+				newBodyWithCSS(
+					newPrefaceWithCSS(d.FindPreface())+
+						replaceBodyHTML2Text(d.FindBody())+
+						newAfterWordWithCSS(d.FindAfterword())),
 		})
 	}
 	tmp := uc.newIndexPage(texts)
@@ -157,48 +159,57 @@ func (uc *interactor) newCoverPage(txt string) epubSection {
 	return epubSection{
 		chapterTitle: "",
 		subTitle:     d.FindTitle(),
-		body:         addCoverCSS(d.FindTitle()) + addAuthorCSS("author "+d.FindAuthor()),
+		body:         addCoverCSS(d.FindTitle()) + newAuthorWithCSS("author "+d.FindAuthor()),
 	}
 }
 
-func addAuthorCSS(author string) string {
-	return `<div id="author" class="author">` + author + `</div>`
-}
-
-func getPrefaceCSS(d query.IQuery) string {
-	p := d.FindPreface()
-	if len(p) == 0 {
-		return ""
-	}
-	return `<div id="preface=%s" class="episode-preface">` + p + `</div>`
-}
-
-func getAfterWordCSS(d query.IQuery) string {
-	aw := d.FindAfterword()
-	if len(aw) == 0 {
-		return ""
-	}
-	return `<div id="afterword-%s" class="episode-afterword">` + aw + `</div>`
-}
-
-func getEpisodeTitle(d query.IQuery) string {
-	return `<div id="episode-title" class="episode-title">` +
-		digitPatternTil3.ReplaceAllString(d.FindEpisodeTitle(),
-			`<span class="text-combine">${key}</span>`) +
-		`</div>`
-}
-
-var digitPatternTil2 = regexp.MustCompile(`(?P<key>\b(\d{1,2})\b)`) // `Word boundary {1 or 2 digit} Word boundary` will hit
+var digitPatternTil2 = regexp.MustCompile(`(?P<key>(\b\d{1,2}\b))`) // `Word boundary {1 or 2 digit} Word boundary` will hit
 var digitPatternTil3 = regexp.MustCompile(`(?P<key>\b(\d{1,3})\b)`)
+var singleQuotePattern = regexp.MustCompile(`"(.+?)"`)
 var exclamationAndQuestionPattern = regexp.MustCompile(`(?P<key>(!!|!\?|\?|!|！！|！？|？|！))`)
 
 func addCoverCSS(cover string) string {
 	return `<div class="cover">` + cover + `</div>`
 }
 
-func addCSSClass(body string) string {
+func newBodyWithCSS(body string) string {
 	tmp := digitPatternTil2.ReplaceAllString(
 		body, `<span class="text-combine">${key}</span>`)
 	return exclamationAndQuestionPattern.ReplaceAllString(
 		tmp, `<span class="text-combine">${key}</span>`)
+}
+
+func newAuthorWithCSS(author string) string {
+	return `<div id="author" class="author">` + author + `</div>`
+}
+
+func newPrefaceWithCSS(preface string) string {
+	if len(preface) == 0 {
+		return ""
+	}
+	return `<div id="preface=%s" class="episode-preface">` + preface + `</div>`
+}
+
+func newAfterWordWithCSS(aw string) string {
+	if len(aw) == 0 {
+		return ""
+	}
+	return `<div id="afterword-%s" class="episode-afterword">` + aw + `</div>`
+}
+
+func addEpisodeTitleCSS(title string) string {
+	return `<div id="episode-title" class="episode-title">` +
+		digitPatternTil3.ReplaceAllString(title, `<span class="text-combine">${key}</span>`) +
+		`</div>`
+}
+
+func replaceBodyHTML2Text(s string) string {
+	s = strings.ReplaceAll(s, "&#34;", `"`) // &#34; -> "
+	// FIXME &#XX;
+	s = convertDoubleQuote2DoubleInDesignDoubleQuote(s) // "aaa" -> 『aaa』
+	return s
+}
+
+func convertDoubleQuote2DoubleInDesignDoubleQuote(s string) string {
+	return singleQuotePattern.ReplaceAllString(s, `『$1』`)
 }
