@@ -3,9 +3,7 @@ package novel
 import (
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/timestamp"
-
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"narou/domain/metadata"
 )
 
@@ -57,7 +55,6 @@ func convSub2PbSub(subs []metadata.Sub) []*Sub {
 	return ret
 }
 
-func convTime2Stamp(time time.Time) *timestamp.Timestamp {
-	t, _ := ptypes.TimestampProto(time)
-	return t
+func convTime2Stamp(time time.Time) *timestamppb.Timestamp {
+	return timestamppb.New(time)
 }
