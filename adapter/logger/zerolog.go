@@ -26,7 +26,7 @@ func NewLogger(ctx context.Context) log.Logger {
 		TimeFormat:      time.RFC3339,
 		PartsOrder:      nil,
 		FormatTimestamp: nil,
-		FormatLevel: func(i interface{}) string {
+		FormatLevel: func(i any) string {
 			switch i.(string) {
 			case "error":
 				return aurora.Red(strings.ToUpper(fmt.Sprintf("| %-6s|", i))).String()
@@ -38,13 +38,13 @@ func NewLogger(ctx context.Context) log.Logger {
 				return aurora.Green(strings.ToUpper(fmt.Sprintf("| %-6s|", i))).String()
 			}
 		},
-		FormatMessage: func(i interface{}) string {
+		FormatMessage: func(i any) string {
 			return fmt.Sprintf("*** %s ****", i)
 		},
-		FormatFieldValue: func(i interface{}) string {
+		FormatFieldValue: func(i any) string {
 			return strings.ToUpper(fmt.Sprintf("%s", i))
 		},
-		FormatErrFieldName: func(i interface{}) string {
+		FormatErrFieldName: func(i any) string {
 			return fmt.Sprintf("%s:", i)
 		},
 		FormatErrFieldValue: nil,
@@ -57,31 +57,31 @@ func NewLogger(ctx context.Context) log.Logger {
 	return lg
 }
 
-func (l *levelLogger) Debug(msg string, keyValues ...interface{}) {
+func (l *levelLogger) Debug(msg string, keyValues ...any) {
 	l.print(l.logger.Debug, msg, keyValues...)
 }
 
-func (l *levelLogger) Info(msg string, keyValues ...interface{}) {
+func (l *levelLogger) Info(msg string, keyValues ...any) {
 	l.print(l.logger.Info, msg, keyValues...)
 }
 
-func (l *levelLogger) Warn(msg string, keyValues ...interface{}) {
+func (l *levelLogger) Warn(msg string, keyValues ...any) {
 	l.print(l.logger.Warn, msg, keyValues...)
 }
 
-func (l *levelLogger) Error(msg string, keyValues ...interface{}) {
+func (l *levelLogger) Error(msg string, keyValues ...any) {
 	l.print(l.logger.Error, msg, keyValues...)
 }
 
-func (l *levelLogger) Fatal(msg string, keyValues ...interface{}) {
+func (l *levelLogger) Fatal(msg string, keyValues ...any) {
 	l.print(l.logger.Fatal, msg, keyValues...)
 }
 
-func (l *levelLogger) Panic(msg string, keyValues ...interface{}) {
+func (l *levelLogger) Panic(msg string, keyValues ...any) {
 	l.print(l.logger.Panic, msg, keyValues...)
 }
 
-func (l *levelLogger) Log(keyValues ...interface{}) {
+func (l *levelLogger) Log(keyValues ...any) {
 	if len(keyValues) == 1 {
 		l.print(l.logger.Log, fmt.Sprint(keyValues[0]))
 	} else {
@@ -89,7 +89,7 @@ func (l *levelLogger) Log(keyValues ...interface{}) {
 	}
 }
 
-func (l *levelLogger) print(lvl func() *zerolog.Event, msg string, keyValues ...interface{}) {
+func (l *levelLogger) print(lvl func() *zerolog.Event, msg string, keyValues ...any) {
 	// when log.Info("test"), keyValues is [[]]
 	if !(len(keyValues) == 1 && reflect.ValueOf(keyValues[0]).IsNil()) &&
 		len(keyValues)%2 != 0 {
@@ -116,7 +116,7 @@ func (l *levelLogger) print(lvl func() *zerolog.Event, msg string, keyValues ...
 	}
 }
 
-func convertKey(k interface{}) string {
+func convertKey(k any) string {
 	switch x := k.(type) {
 	case string:
 		return x
@@ -127,7 +127,7 @@ func convertKey(k interface{}) string {
 	}
 }
 
-func apply(e *zerolog.Event, k string, v interface{}) *zerolog.Event {
+func apply(e *zerolog.Event, k string, v any) *zerolog.Event {
 	switch x := v.(type) {
 	case int:
 		e = e.Int(k, x)
