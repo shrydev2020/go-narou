@@ -23,7 +23,7 @@ jobs:
         fi
   
     - name: Build
-      run: go build -v .
+      run: go build -v main.go
 
     - name: Generate coverage report
       run: |
