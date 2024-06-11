@@ -1,6 +1,6 @@
 import { NovelListClient } from "../../../generated/list_grpc_pb";
 import { Req } from "../../../generated/list_pb";
-import { credentials, ServiceError } from "grpc";
+import { credentials, ServiceError } from "@grpc/grpc-js";
 import { Novels } from "../../../generated/list_pb";
 
 function getList() {
