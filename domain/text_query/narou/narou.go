@@ -1,21 +1,21 @@
 package narou
 
 import (
-	"io/ioutil"
+	"io"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 
 	"narou/domain/metadata"
-	"narou/domain/query"
+	"narou/domain/text_query"
 )
 
 type narouQuery struct {
 	d *goquery.Document
 }
 
-func New(html string) (query.IQuery, error) {
-	cls := ioutil.NopCloser(strings.NewReader(html))
+func NewNarouQuery(html string) (text_query.IQuery, error) {
+	cls := io.NopCloser(strings.NewReader(html))
 	d, err := goquery.NewDocumentFromReader(cls)
 
 	if err != nil {

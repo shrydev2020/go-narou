@@ -1,4 +1,4 @@
-package query
+package text_query
 
 import "narou/domain/metadata"
 

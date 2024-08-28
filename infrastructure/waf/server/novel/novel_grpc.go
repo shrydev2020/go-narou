@@ -3,22 +3,26 @@ package novel
 import (
 	"context"
 
-	"narou/adapter/logger"
-	metadataRp "narou/adapter/repository/metadata"
+	"narou/domain/metadata"
 	"narou/infrastructure/database"
-	metadataUc "narou/usecase/interactor/metadata"
+	"narou/sdk/logger"
+	metadataUc "narou/usecase/metadata"
 	pb "narou/usecase/port/boudary/proto/novel"
 )
 
 func (s *Service) Get(ctx context.Context, _ *pb.Req) (*pb.Novels, error) {
-	lg := logger.NewLogger(ctx)
+	lg, err := logger.NewServerLogger(ctx)
+	if err != nil {
+		return nil, err
+	}
 	lg.Info("grpc server get start")
 	defer lg.Info("grpc server get end")
 
-	con, _ := database.GetConn()
-	lst, _ := metadataUc.NewMetaDataListInteractor(ctx,
-		lg, metadataRp.NewRepository(con),
-		nil).Execute()
+	con, err := database.GetConn()
+	if err != nil {
+		return nil, err
+	}
+	lst, _ := metadataUc.NewMetaDataListUseCase(lg, metadata.NewRepository(con), nil).Execute(ctx)
 
 	return pb.Convert2ProtoBuf(lst), nil
 }

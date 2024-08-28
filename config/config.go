@@ -7,12 +7,12 @@ import (
 	"github.com/spf13/viper"
 )
 
-// db setting.
+// Database db setting.
 type Database struct {
 	Path string
 }
 
-// destination to row html.
+// Storage destination to row html.
 type Storage struct {
 	Dist    string
 	SubDist string

@@ -1,11 +1,11 @@
 package middleware
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
@@ -18,14 +18,19 @@ type ServiceContext struct {
 	ServiceConn *grpc.ClientConn
 }
 
+const requestIDKey = "request-id"
+
 // GRPCConnMiddleware conn grpc server
 func GRPCConnMiddleware() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			ctx, canceler := context.WithTimeout(c.Request().Context(), time.Second*1)
-			defer canceler()
+			requestID := uuid.New().String()
+			// コンテキストにリクエストIDを設定
+			c.Set(requestIDKey, requestID)
+			// レスポンスヘッダーにもリクエストIDを設定
+			c.Response().Header().Set(requestIDKey, requestID)
 
-			con, err := grpc.DialContext(ctx, grpcAddress, grpc.WithBlock(), grpc.WithInsecure(), newOption())
+			con, err := grpc.NewClient(grpcAddress, newOption())
 			defer wrapper(con.Close)
 
 			if err != nil {

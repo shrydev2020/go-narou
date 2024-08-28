@@ -5,22 +5,22 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	metadata3 "narou/usecase/interactor/metadata"
-
-	"narou/adapter/logger"
-	metadata2 "narou/adapter/repository/metadata"
+	"narou/domain/metadata"
 	"narou/infrastructure/database"
+	"narou/sdk/logger"
+	metadata3 "narou/usecase/metadata"
 )
 
 func Get(c echo.Context) error {
-	lg := logger.NewLogger(c.Request().Context())
+	lg, err := logger.NewServerLogger(c.Request().Context())
+	if err != nil {
+		return err
+	}
 	lg.Info("main start")
 	defer lg.Info("main end")
 
 	con, _ := database.GetConn()
-	lst, _ := metadata3.NewMetaDataListInteractor(c.Request().Context(),
-		lg, metadata2.NewRepository(con),
-		nil).Execute()
+	lst, _ := metadata3.NewMetaDataListUseCase(lg, metadata.NewRepository(con), nil).Execute(c.Request().Context())
 
 	return c.JSON(http.StatusOK, lst)
 }

@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/spf13/cobra"
-
-	"narou/adapter/logger"
+	"narou/domain/metadata"
 	"narou/infrastructure/database"
-	"narou/interface/controller"
-	"narou/usecase/interactor/initialize"
+	"narou/sdk/logger"
+	"narou/usecase/initialize"
+
+	"github.com/spf13/cobra"
 )
 
 func init() {
@@ -22,27 +22,32 @@ func init() {
 		Long: `
 initialize database
 `,
-		Run: executeInitialize,
+		RunE: executeInitialize,
 	}
 
 	rootCmd.AddCommand(initCmd)
 }
 
-func executeInitialize(c *cobra.Command, _ []string) {
+func executeInitialize(c *cobra.Command, _ []string) error {
 	if Question("Execute DB initialization y/n] ") {
 		fmt.Println("execute initialization")
-		lg := logger.NewLogger(context.Background())
-		db, _ := database.GetConn()
-		i := initialize.NewInitializeInteractor(db)
-		if err := controller.NewInitializeController(i, lg, db).Execute(); err != nil {
-			lg.Error("err", "err", err.Error())
-			return
+		lg, err := logger.NewCLILogger(context.Background())
+		if err != nil {
+			return err
 		}
-
+		db, err := database.GetConn()
+		if err != nil {
+			return err
+		}
+		if err := initialize.NewInitUseCase(metadata.NewRepository(db)).Execute(); err != nil {
+			lg.Error("err", "err", err.Error())
+			return err
+		}
 		fmt.Println("finish initialization")
 	} else {
 		fmt.Println("Bye!")
 	}
+	return nil
 }
 
 func Question(q string) bool {

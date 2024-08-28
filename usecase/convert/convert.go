@@ -3,46 +3,43 @@ package convert
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"regexp"
 	"strconv"
 	"strings"
 
+	"github.com/cockroachdb/errors"
 	"github.com/logrusorgru/aurora"
 
 	"narou/config"
 	"narou/domain/epub"
-	metadataModel "narou/domain/metadata"
+	"narou/domain/metadata"
 	"narou/domain/novel"
-	"narou/domain/query"
-	"narou/infrastructure/log"
-	"narou/usecase/port"
+	"narou/domain/text_query"
 )
 
-type Interactor interface {
-	Execute(uri metadataModel.URI) port.ApplicationError
+type UseCase interface {
+	Execute(ctx context.Context, uri metadata.URI) error
 }
 
-type interactor struct {
-	ctx          context.Context
-	logger       log.Logger
-	novelMetaRp  metadataModel.IRepository
+type convertUseCase struct {
+	logger       *slog.Logger
+	novelMetaRp  metadata.IRepository
 	novelRp      novel.IRepository
 	epubRp       epub.IRepository
-	queryService func(string) (query.IQuery, error)
+	queryService func(string) (text_query.IQuery, error)
 	cfg          config.IConfigure
 }
 
-func NewConvertInteractor(
-	ctx context.Context,
-	lg log.Logger,
-	metaDataRepo metadataModel.IRepository,
+func NewConvertUseCase(
+	lg *slog.Logger,
+	metaDataRepo metadata.IRepository,
 	novelRepo novel.IRepository,
 	epubRp epub.IRepository,
 	cfg config.IConfigure,
-	queryService func(string) (query.IQuery, error)) Interactor {
+	queryService func(string) (text_query.IQuery, error)) UseCase {
 
-	return &interactor{
-		ctx:          ctx,
+	return &convertUseCase{
 		logger:       lg,
 		novelMetaRp:  metaDataRepo,
 		novelRp:      novelRepo,
@@ -52,27 +49,29 @@ func NewConvertInteractor(
 	}
 }
 
-func (uc *interactor) Execute(uri metadataModel.URI) port.ApplicationError {
+func (uc *convertUseCase) Execute(ctx context.Context, uri metadata.URI) error {
 	defer uc.logger.Info("convert done", "", aurora.Cyan("Convert Done"))
 
 	meta, err := uc.novelMetaRp.FindByTopURI(uri)
 	if err != nil {
-		uc.logger.Error(err.Error())
-		return port.NewPortError(err, port.RepositoryError)
+		uc.logger.ErrorContext(ctx, err.Error())
+		return errors.Wrapf(err, "find by top uri %s", uri)
 	}
-
-	data := uc.convertText2epubData(uc.novelRp.FindByNobelSiteAndTitle(meta.SiteName, meta.Title), uri)
-
-	epubModel, err := uc.newEpubData(epub.NewEpub(uc.ctx, uc.cfg).New(meta.Author, meta.Title), data)
-
+	s, err := uc.novelRp.FindByNobelSiteAndTitle(meta.SiteName, meta.Title)
 	if err != nil {
-		return port.NewPortError(err, port.EpubError)
+		uc.logger.ErrorContext(ctx, err.Error())
+		return errors.Wrapf(err, "find by site %s and title %s", meta.SiteName, meta.Title)
+	}
+	data := uc.convertText2epubData(s, uri)
+
+	epubModel, err := uc.newEpubData(ctx, epub.NewEpub(uc.cfg).New(ctx, meta.Author, meta.Title), data)
+	if err != nil {
+		return errors.Wrap(err, "create epub")
 	}
 
-	if err := uc.epubRp.Store(epubModel, meta.SiteName); err != nil {
-		return port.NewPortError(err, port.RepositoryError)
+	if err := uc.epubRp.Store(ctx, epubModel, meta.SiteName); err != nil {
+		return errors.Wrap(err, "store epub")
 	}
-
 	return nil
 }
 
@@ -82,31 +81,30 @@ type epubSection struct {
 	body         string
 }
 
-func (uc *interactor) newEpubData(model epub.IEpub, data []epubSection) (epub.IEpub, error) {
-	cssPath, err := model.AddCSS("preset/vertical.css", "")
+func (uc *convertUseCase) newEpubData(ctx context.Context, model epub.IEpub, data []epubSection) (epub.IEpub, error) {
+	cssPath, err := model.AddCSS(ctx, "preset/vertical.css", "")
 	if err != nil {
 		uc.logger.Error(err.Error())
-		return nil, port.NewPortError(err, port.EpubError)
+		return nil, errors.Newf("AddCSS error:%v", err)
 	}
 
-	_, err2 := model.AddFont("preset/DMincho.ttf", "")
+	_, err2 := model.AddFont(ctx, "preset/DMincho.ttf", "")
 	if err2 != nil {
 		uc.logger.Error(err2.Error())
-		return nil, port.NewPortError(err, port.EpubError)
+		return nil, errors.Newf("AddFont error:%v", err)
 	}
 
 	for _, d := range data {
-		_, err3 := model.AddSection(d.body, d.subTitle, "", cssPath)
+		_, err3 := model.AddSection(ctx, d.body, d.subTitle, "", cssPath)
 		if err3 != nil {
 			uc.logger.Error(err3.Error())
-			return nil, port.NewPortError(err, port.EpubError)
+			return nil, errors.Newf("AddSection error:%v", err)
 		}
 	}
-
 	return model, nil
 }
 
-func (uc *interactor) convertText2epubData(texts []string, uri metadataModel.URI) []epubSection {
+func (uc *convertUseCase) convertText2epubData(texts []string, uri metadata.URI) []epubSection {
 	var data []epubSection
 	for i, txt := range texts {
 		d, _ := uc.queryService(txt)
@@ -134,7 +132,7 @@ func (uc *interactor) convertText2epubData(texts []string, uri metadataModel.URI
 	return ret
 }
 
-func (uc *interactor) newIndexPage(texts []string) epubSection {
+func (uc *convertUseCase) newIndexPage(texts []string) epubSection {
 	body := `<div id="index-page"><ol>`
 	for i, text := range texts {
 		d, _ := uc.queryService(text)
@@ -154,7 +152,7 @@ func (uc *interactor) newIndexPage(texts []string) epubSection {
 	}
 }
 
-func (uc *interactor) newCoverPage(txt string) epubSection {
+func (uc *convertUseCase) newCoverPage(txt string) epubSection {
 	d, _ := uc.queryService(txt)
 	return epubSection{
 		chapterTitle: "",

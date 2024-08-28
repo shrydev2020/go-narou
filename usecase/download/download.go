@@ -1,63 +1,56 @@
 package download
 
 import (
-	"context"
+	"log/slog"
 	"net/url"
 	"regexp"
 	"strconv"
 	"time"
 
+	"github.com/cockroachdb/errors"
+
 	metadataModel "narou/domain/metadata"
 	"narou/domain/novel"
-	"narou/domain/query"
-	"narou/infrastructure/log"
+	"narou/domain/text_query"
 	"narou/interface/gateway/crawl"
-	"narou/usecase/port"
-	"narou/usecase/port/boudary/download"
 )
 
-type Interactor interface {
-	Execute(uri metadataModel.URI) ([]string, port.ApplicationError)
+type UseCase interface {
+	Execute(uri metadataModel.URI) ([]string, error)
 }
 
-type interactor struct {
-	ctx           context.Context
-	logger        log.Logger
+type usecase struct {
+	logger        *slog.Logger
 	novelMetaRepo metadataModel.IRepository
 	novelRp       novel.IRepository
 	crawl         crawl.Crawler
-	queryService  func(string) (query.IQuery, error)
-	outPutPort    download.OutputPorter
+	queryService  func(string) (text_query.IQuery, error)
 }
 
-func NewDownloadInteractor(
-	ctx context.Context,
-	lg log.Logger,
+func NewDownloadUseCase(
+	lg *slog.Logger,
 	metaDataRepo metadataModel.IRepository,
 	novelRepo novel.IRepository,
-	outputPort download.OutputPorter,
 	crawl crawl.Crawler,
-	queryService func(string) (query.IQuery, error)) Interactor {
-	return &interactor{
-		ctx:           ctx,
+	queryService func(string) (text_query.IQuery, error)) UseCase {
+	return &usecase{
 		logger:        lg,
 		novelMetaRepo: metaDataRepo,
 		novelRp:       novelRepo,
 		crawl:         crawl,
 		queryService:  queryService,
-		outPutPort:    outputPort,
 	}
 }
 
-func (uc *interactor) Execute(uri metadataModel.URI) ([]string, port.ApplicationError) {
+func (uc *usecase) Execute(uri metadataModel.URI) ([]string, error) {
 	index, err := uc.crawl.Start(uri)
 	if err != nil {
-		return nil, port.NewPortError(err, port.CrawlerError)
+		return nil, errors.Wrapf(err, "failed to start crawler")
 	}
 
 	topPage, err := uc.queryService(index)
 	if err != nil {
-		return nil, port.NewPortError(err, port.CrawlerError)
+		return nil, errors.Wrapf(err, "failed to query top page")
 	}
 
 	title := topPage.FindTitle()
@@ -67,7 +60,7 @@ func (uc *interactor) Execute(uri metadataModel.URI) ([]string, port.Application
 
 	meta, err := uc.novelMetaRepo.FindByTopURI(uri)
 	if err != nil {
-		return nil, port.NewPortError(err, port.RepositoryError)
+		return nil, errors.Wrapf(err, "failed to find metadata")
 	}
 	if meta == nil {
 		meta = metadataModel.NewMetaNovel(author, title, story, uri, subTitles)
@@ -75,14 +68,14 @@ func (uc *interactor) Execute(uri metadataModel.URI) ([]string, port.Application
 
 	_, err = uc.novelMetaRepo.Store(meta)
 	if err != nil {
-		return nil, port.NewPortError(err, port.RepositoryError)
+		return nil, errors.Wrapf(err, "failed to store metadata")
 	}
 	err2 := uc.novelRp.Store(meta.SiteName,
 		meta.Title,
-		strconv.Itoa(0)+" "+"000　index.html",
+		strconv.Itoa(0)+" "+"000 index.html",
 		index)
 	if err2 != nil {
-		return nil, port.NewPortError(err, port.RepositoryError)
+		return nil, errors.Wrapf(err, "failed to store metadata")
 	}
 	uc.logger.Info("start download")
 	baseURI, _ := url.Parse(string(uri))
@@ -90,33 +83,32 @@ func (uc *interactor) Execute(uri metadataModel.URI) ([]string, port.Application
 	if meta.Length > 1 {
 		_, err = uc.novelMetaRepo.Store(meta)
 		if err != nil {
-			return nil, port.NewPortError(err, port.RepositoryError)
+			return nil, errors.Wrapf(err, "failed to store metadata")
 		}
-		// uc.outPutPort.OutPUtBoundary(novelOutputData)
 		return uc.downloadSubs(baseURI, subURLs, meta)
 	}
 	topPage.FindBody()
 	return nil, nil
 }
 
-func (uc *interactor) downloadSubs(baseURI *url.URL, subURLs []metadataModel.URI, meta *metadataModel.Novel) ([]string, port.ApplicationError) {
+func (uc *usecase) downloadSubs(baseURI *url.URL, subURLs []metadataModel.URI, meta *metadataModel.Novel) ([]string, error) {
 	downloadAt := time.Now()
 	re := regexp.MustCompile("/")
 	for i, sub := range subURLs {
 		absURI, e := toAbsURL(baseURI, sub)
 		if e != nil {
 			uc.logger.Error("err occurred", "msg", e.Error())
-			return nil, port.NewPortError(e, port.InvalidParam)
+			return nil, errors.Wrapf(e, "failed to parse sub url")
 		}
 
 		pageText, er := uc.crawl.Start(metadataModel.URI(absURI))
 		if er != nil {
-			return nil, port.NewPortError(er, port.CrawlerError)
+			return nil, errors.Wrapf(er, "failed to start crawler")
 		}
 
 		query, err := uc.queryService(pageText)
 		if err != nil {
-			return nil, port.NewPortError(err, port.CrawlerError)
+			return nil, errors.Wrapf(err, "failed to start crawler")
 		}
 
 		err2 := uc.novelRp.Store(meta.SiteName,
@@ -125,7 +117,7 @@ func (uc *interactor) downloadSubs(baseURI *url.URL, subURLs []metadataModel.URI
 			pageText)
 		if err2 != nil {
 			uc.logger.Error("error occurred when store index", "err occurred when store novel", err2.Error())
-			return nil, port.NewPortError(er, port.CrawlerError)
+			return nil, errors.Wrapf(err2, "failed to start crawler")
 		}
 		if _, err3 := uc.novelMetaRepo.StoreSub(&metadataModel.Sub{
 			NovelID:      meta.ID,

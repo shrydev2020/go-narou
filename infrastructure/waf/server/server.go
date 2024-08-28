@@ -11,14 +11,14 @@ import (
 	pb "narou/usecase/port/boudary/proto/novel"
 )
 
-type server struct{}
+type Server struct{}
 
-func New() *server {
-	return &server{}
+func New() *Server {
+	return &Server{}
 }
 
 // todo use server logger, server group
-func (server) Start() {
+func (Server) Start() {
 	e := echo.New()
 	grpcServer := grpc.NewServer()
 	pb.RegisterNovelListServer(grpcServer, novel.NewGrpcService())

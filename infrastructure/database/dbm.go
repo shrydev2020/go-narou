@@ -64,8 +64,6 @@ type DBM interface {
 	Set(name string, value any) DBM
 	Get(name string) (value any, ok bool)
 	AddError(err error) error
-
-	// extra
 	Take(out any, where ...any) DBM
 	Error() error
 	RowsAffected() int64
