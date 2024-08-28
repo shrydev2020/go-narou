@@ -3,8 +3,9 @@ package novel
 import (
 	"time"
 
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"narou/domain/metadata"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func Convert2ProtoBuf(lst []metadata.Novel) *Novels {

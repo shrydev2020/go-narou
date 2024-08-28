@@ -3,10 +3,10 @@ package crawl
 import (
 	"bytes"
 	"io/ioutil"
+	"log/slog"
 	"net/http"
 
 	"narou/domain/metadata"
-	"narou/infrastructure/log"
 )
 
 type Crawler interface {
@@ -14,10 +14,10 @@ type Crawler interface {
 }
 
 type crawl struct {
-	lg log.Logger
+	lg *slog.Logger
 }
 
-func NewCrawler(lg log.Logger) Crawler {
+func NewCrawler(lg *slog.Logger) Crawler {
 	return &crawl{
 		lg: lg,
 	}
@@ -42,7 +42,7 @@ func (c crawl) Start(uri metadata.URI) (string, error) {
 	return buf.String(), nil
 }
 
-func handleDefer(lg log.Logger, c func() error) {
+func handleDefer(lg *slog.Logger, c func() error) {
 	if err := c(); err != nil {
 		lg.Error(err.Error())
 	}

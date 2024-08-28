@@ -6,21 +6,19 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"narou/adapter/logger"
-	"narou/adapter/query/hameln"
-	"narou/adapter/query/narou"
-	"narou/adapter/repository/epub"
-	metadataRepo "narou/adapter/repository/metadata"
-	"narou/adapter/repository/novel"
 	"narou/config"
+	"narou/domain/epub"
 	"narou/domain/metadata"
-	"narou/domain/query"
+	novel2 "narou/domain/novel"
+	"narou/domain/text_query"
+	"narou/domain/text_query/hameln"
+	"narou/domain/text_query/narou"
 	"narou/infrastructure/database"
 	"narou/infrastructure/storage"
-	"narou/interface/controller"
 	"narou/interface/gateway/crawl"
-	"narou/usecase/interactor/convert"
-	"narou/usecase/interactor/download"
+	"narou/sdk/logger"
+	"narou/usecase/convert"
+	"narou/usecase/download"
 )
 
 func init() {
@@ -41,52 +39,51 @@ func executeArgs(_ *cobra.Command, args []string) error {
 
 func executeDownload(c *cobra.Command, args []string) error {
 	ctx := c.Context()
-	lg := logger.NewLogger(ctx)
+	lg, err := logger.NewCLILogger(ctx)
+	if err != nil {
+		return err
+	}
 	db, err := database.GetConn()
-
 	if err != nil {
 		return err
 	}
 	cfg := config.GetConfigure()
-	a := download.NewDownloadInteractor(
-		ctx,
+	a := download.NewDownloadUseCase(
 		lg,
-		metadataRepo.NewRepository(db),
-		novel.NewRepository(storage.NewManager(cfg)),
-		nil,
+		metadata.NewRepository(db),
+		novel2.NewRepository(storage.NewManager(cfg)),
 		crawl.NewCrawler(lg),
 		DependencyInjection(args[0]))
 
-	ret, err := controller.NewDownloadController(a, lg).Execute(args)
+	ret, err := a.Execute(metadata.URI(args[0]))
 	if err != nil {
 		lg.Error("error occurred", "err", err.Error())
 		return err
 	}
 	lg.Info("download completed. episodes", "total", len(ret))
-	cvt := convert.NewConvertInteractor(
-		ctx,
+	cvt := convert.NewConvertUseCase(
 		lg,
-		metadataRepo.NewRepository(db),
-		novel.NewRepository(storage.NewManager(cfg)),
+		metadata.NewRepository(db),
+		novel2.NewRepository(storage.NewManager(cfg)),
 		epub.NewRepository(storage.NewManager(cfg)),
 		config.GetConfigure(),
 		DependencyInjection(args[0]))
 
-	if err := controller.NewConvertController(cvt, lg).Execute(args); err != nil {
+	if err := cvt.Execute(ctx, metadata.URI(args[0])); err != nil {
 		lg.Error("err", "error", err.Error())
 	}
-	m, _ := metadataRepo.NewRepository(db).FindByTopURI(metadata.URI(args[0]))
+	m, _ := metadata.NewRepository(db).FindByTopURI(metadata.URI(args[0]))
 	msg := fmt.Sprintf("convert completed. epub generated at %s/%s/%s/%s.epub", storage.NewManager(cfg).GetDist(),
 		m.SiteName, m.Title, m.Title)
 	lg.Info("finis!", "msg", msg)
 	return nil
 }
 
-func DependencyInjection(uri string) func(string) (query.IQuery, error) {
+func DependencyInjection(uri string) func(string) (text_query.IQuery, error) {
 	if strings.Contains(uri, "https://ncode.syosetu.com/") {
-		return narou.New
+		return narou.NewNarouQuery
 	} else if strings.Contains(uri, "https://syosetu.org/") {
-		return hameln.New
+		return hameln.NewHamelnQuery
 	}
 	panic("not implement")
 }
